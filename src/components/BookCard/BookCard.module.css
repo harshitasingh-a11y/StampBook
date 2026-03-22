@@ -1,0 +1,49 @@
+.wrapper {
+  transform: rotate(var(--rotation, 0deg));
+  transform-origin: center center;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease;
+  background: #fff;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.cover {
+  flex: 1;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.info {
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2c;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pageCount {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+  display: block;
+}

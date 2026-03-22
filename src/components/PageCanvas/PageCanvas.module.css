@@ -1,0 +1,211 @@
+/* ── Two-page spread ──────────────────────────────────────────── */
+.spread {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.leftPage {
+  flex: 1;
+  min-width: 0;
+}
+
+.spine {
+  flex-shrink: 0;
+  width: 1px;
+  background: linear-gradient(to right, rgba(0,0,0,0.09), rgba(0,0,0,0.04) 60%, transparent);
+}
+
+.rightPage {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Postage Stamp ────────────────────────────────────────────── */
+.stampWrap {
+  width: 75%;
+  max-width: 148px;
+}
+
+/*
+  Perforated stamp border via background-image:
+  Circles painted in the approximate page surface colour (#e9e5d8)
+  overlay the cream stamp body (#f9f7f2), creating the illusion of holes.
+  Background layers stack first-on-top, last layer is the solid fill.
+*/
+.stamp {
+  width: 100%;
+  border-radius: 3px;
+  background-color: #f9f7f2;
+  background-image:
+    /* Top perforations */
+    radial-gradient(circle, #e4dfd0 54%, transparent 55%) 0 -5.5px / 13px 11px repeat-x,
+    /* Bottom perforations */
+    radial-gradient(circle, #e4dfd0 54%, transparent 55%) 0 calc(100% + 5.5px) / 13px 11px repeat-x,
+    /* Left perforations */
+    radial-gradient(circle, #e4dfd0 54%, transparent 55%) -5.5px 0 / 11px 13px repeat-y,
+    /* Right perforations */
+    radial-gradient(circle, #e4dfd0 54%, transparent 55%) calc(100% + 5.5px) 0 / 11px 13px repeat-y;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.13), 0 1px 3px rgba(0,0,0,0.08);
+  padding: 9px 9px 9px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* Image area — sage-green (#CAC8B3 from Paper design), fills top portion */
+.stampImageArea {
+  width: 100%;
+  aspect-ratio: 1.1 / 1;
+  background: #CAC8B3;
+  border-radius: 5px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.stampPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Info row: text left, dots right */
+.stampInfo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 1px;
+}
+
+.stampTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.stampTitle {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #2B2B2B;
+  line-height: 1.2;
+}
+
+.stampYear {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 7.5px;
+  color: #2B2B2B;
+  opacity: 0.68;
+  line-height: 1.2;
+}
+
+/* Publisher dots — matching Paper: blue-grey + gold (mix-blend-multiply) */
+.stampDots {
+  display: flex;
+  align-items: center;
+}
+
+.dot1 {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ACB8BB;
+  margin-right: -4px;
+}
+
+.dot2 {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #EBD790;
+  mix-blend-mode: multiply;
+}
+
+/* ── Postmark ─────────────────────────────────────────────────── */
+.postmark {
+  position: absolute;
+  bottom: 8%;
+  right: 6%;
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.postmarkCircle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 9px;
+  border: 1.5px dashed currentColor;
+  border-radius: var(--radius-full);
+  transform: rotate(-12deg);
+  min-width: 56px;
+}
+
+.postmarkDate {
+  font-family: var(--font-handwriting);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.postmarkLocation {
+  font-family: var(--font-handwriting);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+/* ── Floating toolbar ─────────────────────────────────────────── */
+.toolbar {
+  position: absolute;
+  bottom: var(--spacing-md);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  color: #2c2c2c;
+  transition: background 0.15s ease;
+}
+
+.toolbarBtn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.toolbarBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.toolbarLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c2c2c;
+  min-width: 48px;
+  text-align: center;
+}

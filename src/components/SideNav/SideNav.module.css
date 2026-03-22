@@ -1,0 +1,115 @@
+/* ── Sidebar — 182px, desktop only (≥ 768px) ─────────────────── */
+.nav {
+  width: 182px;
+  flex-shrink: 0;
+  height: 100vh;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  /* Match home screen background exactly */
+  background: #f5f0eb;
+  border-right: 0.8px solid #E4CFBE;
+  padding: 36px 16px 24px;
+  gap: 32px;
+}
+
+/* ── Logo ─────────────────────────────────────────────────────── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+/* Dark brown box with the stamp image inside — matches Figma */
+.logoIconWrap {
+  width: 22px;
+  height: 21px;
+  background: #4a301c;
+  border: 0.7px solid rgba(208, 171, 139, 0.4);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+/* "StampBook" in serif — matches Libre Baskerville from Figma */
+.logoText {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #4a301c;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* ── Nav items ────────────────────────────────────────────────── */
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  color: #9a9a9a;
+}
+
+.item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #3a3a3a;
+}
+
+/* Active pill — darker warm tone against the #f5f0eb background */
+.item.active {
+  background: #ddd5c8;
+  color: #1c1c1c;
+}
+
+.item.active .icon {
+  color: #4a301c;
+}
+
+.item.active .label {
+  font-weight: 600;
+}
+
+.icon {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.label {
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: inherit;
+}
+
+
+/* Hide on mobile */
+@media (max-width: 767px) {
+  .nav {
+    display: none;
+  }
+}

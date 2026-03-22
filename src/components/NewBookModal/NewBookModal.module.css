@@ -1,0 +1,118 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: var(--spacing-md);
+}
+
+.modal {
+  background: #fffdf9;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--shadow-modal);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  color: #999;
+  padding: 4px;
+  transition: color 0.15s ease;
+}
+
+.close:hover {
+  color: #2c2c2c;
+}
+
+.heading {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  color: #2c2c2c;
+}
+
+.titleInput {
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-handwriting);
+  font-size: 24px;
+  color: #2c2c2c;
+  padding: 8px 0;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s ease;
+}
+
+.titleInput::placeholder {
+  color: #bbb;
+}
+
+.titleInput:focus {
+  border-bottom-color: rgba(0, 0, 0, 0.3);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+.createBtn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  background-color: #ccc;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.createBtn:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+.createBtn:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.createBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Mobile full-screen bottom sheet */
+@media (max-width: 479px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    max-width: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom, 0px));
+  }
+}

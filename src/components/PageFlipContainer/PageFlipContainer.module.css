@@ -1,0 +1,148 @@
+/* ── Outer container ──────────────────────────────────────────── */
+.container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  min-height: 0;
+  margin-top: -40px;
+}
+
+/* ── Book frame ───────────────────────────────────────────────── */
+/*
+  The open book from Figma (582 × 446 px).
+  All child layers are absolutely positioned using percentages
+  derived from the Figma coordinates.
+*/
+.bookFrame {
+  position: relative;
+  /* Lock height to 50% of viewport, derive width from Figma aspect ratio */
+  height: 80vh;
+  height: 80dvh;
+  width: calc(80dvh * (582 / 446));
+  max-width: calc(100vw - 16px);
+  aspect-ratio: 582 / 446;
+}
+
+/* ── Page surface textures (layer 1) ──────────────────────────── */
+/*
+  The Intersect images add subtle paper shading. mix-blend-mode:multiply
+  darkens the warm page background rather than painting over it.
+  Figma coordinates:
+    book body group: left=4, top=59 (within 582×446)
+    left page texture:  w=287, h=381 → left=4px, top=59px
+    right page textures: w=287, h=381 → left=291px, top=59px
+*/
+.tex {
+  position: absolute;
+  mix-blend-mode: multiply;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.texLeft {
+  left: 0.7%;   /* 4/582  */
+  top: 13.2%;   /* 59/446 */
+  width: 49.3%; /* 287/582 */
+  height: 85.4%;/* 381/446 */
+}
+
+.texRightBack {
+  left: 50%;    /* 291/582 */
+  top: 13.2%;
+  width: 49.3%;
+  height: 85.4%;
+  transform: rotate(180deg);
+}
+
+.texRight {
+  left: 50%;
+  top: 13.2%;
+  width: 49.3%;
+  height: 85.4%;
+}
+
+/* ── Page content area (layer 2) ─────────────────────────────── */
+.pageArea {
+  position: absolute;
+  left: 2.5%;
+  top: 15.5%;
+  width: 95%;
+  height: 82%;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+/* ── Kraft border / book image (layer 3) ──────────────────────── */
+/*
+  The open-book PNG has transparent pages — only the kraft frame is
+  opaque. It sits above the page content to clip/frame it naturally.
+  Figma: left=0, top=59, w=582, h=388
+*/
+.bookImg {
+  position: absolute;
+  left: 0;
+  top: 13.2%;   /* 59/446 */
+  width: 100%;
+  height: 87%;  /* 388/446 */
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Binder clip (layer 4) ────────────────────────────────────── */
+/*
+  Figma: left=176, top=0, w=81, h≈66.
+  The asset overflows slightly (negative insets in Figma) so we
+  extend width/height slightly and shift left accordingly.
+*/
+.clip {
+  position: absolute;
+  left: 29%;    /* ~(176-6)/582 accounting for overflow */
+  top: calc(-1% + 15px);
+  width: 16.5%;
+  height: 16%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* ── Arrow navigation ─────────────────────────────────────────── */
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #5a4a3a;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  z-index: 5;
+}
+
+.arrow:hover {
+  opacity: 0.85;
+}
+
+.arrowLeft {
+  left: 0;
+}
+
+.arrowRight {
+  right: 0;
+}

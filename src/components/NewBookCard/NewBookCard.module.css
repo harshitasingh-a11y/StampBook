@@ -1,0 +1,30 @@
+.card {
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-card);
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card:hover {
+  border-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.iconWrapper {
+  color: #999;
+}
+
+.label {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+}
