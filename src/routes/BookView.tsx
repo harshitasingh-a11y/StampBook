@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Share2 } from 'lucide-react';
 import { useBooksStore } from '@/stores/booksStore';
 import { usePagesStore } from '@/stores/pagesStore';
 import { THEME_HEX } from '@/types/book';
-import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage } from '@/lib/firestoreService';
+import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage, saveBook } from '@/lib/firestoreService';
 import type { Book } from '@/types/book';
 import type { Page } from '@/types/page';
 import PageFlipContainer from '@/components/PageFlipContainer/PageFlipContainer';
@@ -113,6 +113,22 @@ export default function BookView() {
     }
   }, [isSharedView, editAccess, ownerUid]);
 
+  const handleBackClick = useCallback(() => {
+    // Save shared book to current user's collection before navigating away
+    if (isSharedView && book && ownerUid && currentUserUid && ownerUid !== currentUserUid) {
+      try {
+        const sharedBookData: Book = {
+          ...book,
+          sharedFromOwnerUid: ownerUid,
+        };
+        saveBook(currentUserUid, sharedBookData);
+      } catch (error) {
+        console.error('Error saving shared book to collection:', error);
+      }
+    }
+    navigate('/');
+  }, [isSharedView, book, ownerUid, currentUserUid, navigate]);
+
   if (isLoadingShared) {
     return (
       <div className={styles.notFound}>
@@ -143,7 +159,7 @@ export default function BookView() {
       <header className={styles.header}>
         <button
           className={styles.backBtn}
-          onClick={() => navigate('/')}
+          onClick={handleBackClick}
           aria-label="Back to collection"
         >
           <ArrowLeft size={20} />
