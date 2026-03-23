@@ -437,14 +437,6 @@ function LeftFace({ page, idx, editable, onTextSave, onEditingChange }: LeftFace
     setEditing(false);
   }, [page.id]);
 
-  // Sync draftText when journalText is updated externally (e.g. shared view save propagation)
-  useEffect(() => {
-    if (!editing) {
-      setDraftText(page.journalText ?? '');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page.journalText]);
-
   // Use draftText for display so the UI updates immediately after save (before prop propagation)
   const paragraphs = draftText.split('\n\n');
   const isEmpty = !draftText.trim();

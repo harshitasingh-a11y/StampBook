@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Share2 } from 'lucide-react';
 import { useBooksStore } from '@/stores/booksStore';
 import { usePagesStore } from '@/stores/pagesStore';
 import { THEME_HEX } from '@/types/book';
-import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage, saveBook } from '@/lib/firestoreService';
+import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage } from '@/lib/firestoreService';
 import type { Book } from '@/types/book';
 import type { Page } from '@/types/page';
 import PageFlipContainer from '@/components/PageFlipContainer/PageFlipContainer';
@@ -121,7 +121,7 @@ export default function BookView() {
           ...book,
           sharedFromOwnerUid: ownerUid,
         };
-        saveBook(currentUserUid, sharedBookData);
+        useBooksStore.getState().addSharedBook(sharedBookData);
       } catch (error) {
         console.error('Error saving shared book to collection:', error);
       }
