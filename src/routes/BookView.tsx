@@ -68,18 +68,12 @@ export default function BookView() {
 
       {/* Page area */}
       {pages.length > 0 ? (
-        mode === 'view' ? (
-          <PageFlipContainer
-            pages={pages}
-            accentColor={accentColor}
-            currentIndex={currentPage}
-            onIndexChange={setCurrentPage}
-          />
-        ) : (
-          <div className={styles.editArea}>
-            <PageCanvas page={pages[currentPage]} accentColor={accentColor} />
-          </div>
-        )
+        <PageFlipContainer
+          pages={pages}
+          accentColor={accentColor}
+          currentIndex={currentPage}
+          onIndexChange={setCurrentPage}
+        />
       ) : (
         <div className={styles.empty}>
           <p className={styles.emptyText}>No pages yet</p>
@@ -88,8 +82,6 @@ export default function BookView() {
 
       {/* Footer */}
       <div className={styles.footer}>
-        {mode === 'edit' && pages.length > 1 && (
-          <div className={styles.editNav}>
             <button
               className={styles.editNavBtn}
               disabled={currentPage <= 0}
@@ -109,8 +101,6 @@ export default function BookView() {
             >
               <ChevronRight size={18} />
             </button>
-          </div>
-        )}
         <div className={styles.addPageWrap}>
           <button
             className={styles.addPageBtn}

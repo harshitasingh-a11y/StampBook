@@ -23,23 +23,7 @@ function getVideoDuration(file: File): Promise<number> {
   });
 }
 
-// ─── Bayer halftone overlay ────────────────────────────────────────────────────
-
-const BAYER_8 = [
-  [  0, 128,  32, 160,   8, 136,  40, 168],
-  [192,  64, 224,  96, 200,  72, 232, 104],
-  [ 48, 176,  16, 144,  56, 184,  24, 152],
-  [240, 112, 208,  80, 248, 120, 216,  88],
-  [ 12, 140,  44, 172,   4, 132,  36, 164],
-  [204,  76, 236, 108, 196,  68, 228, 100],
-  [ 60, 188,  28, 156,  52, 180,  20, 148],
-  [252, 124, 220,  92, 244, 116, 212,  84],
-] as const;
-
-// Cell size in px — each Bayer cell is 3×3 pixels, dot radius ≤ 1.2px
-const HALFTONE_CELL = 3;
-// Opacity of the dot overlay (0 = invisible, 1 = fully opaque)
-const HALFTONE_OPACITY = 0.18;
+// ─── Subtle halftone dot overlay ──────────────────────────────────────────────
 
 function DitheredImage({ src, className }: { src: string; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -73,52 +57,40 @@ function DitheredImage({ src, className }: { src: string; className?: string }) 
       canvas.height = displayH;
       const ctx = canvas.getContext('2d')!;
 
-      // Step 1 — draw original photo at full quality
+      // Step 1: Draw the original image at full quality
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, displayW, displayH);
 
-      // Step 2 — read luminance to build dot overlay
-      let imgData: ImageData;
+      // Step 2: Get pixel data to sample brightness
+      let imageData: ImageData;
       try {
-        imgData = ctx.getImageData(0, 0, displayW, displayH);
+        imageData = ctx.getImageData(0, 0, displayW, displayH);
       } catch {
-        return; // CORS blocked — original photo already drawn, nothing more to do
+        return; // CORS blocked — original photo already drawn
       }
+      const data = imageData.data;
 
-      // Step 3 — paint halftone dots into an offscreen canvas
-      const dot = document.createElement('canvas');
-      dot.width = displayW; dot.height = displayH;
-      const dCtx = dot.getContext('2d')!;
-      dCtx.fillStyle = 'rgb(28, 18, 8)'; // very dark warm brown dot colour
+      // Step 3: Draw a subtle dot overlay based on local brightness
+      const dotSize    = 2;
+      const spacing    = 5;
+      const maxOpacity = 0.18;
 
-      const C = HALFTONE_CELL;
-      for (let cy = 0; cy < displayH; cy += C) {
-        for (let cx = 0; cx < displayW; cx += C) {
-          // Bayer threshold for this cell (0–252)
-          const bx = Math.floor(cx / C) % 8;
-          const by = Math.floor(cy / C) % 8;
-          const threshold = BAYER_8[by][bx];
+      ctx.save();
+      for (let y = 0; y < displayH; y += spacing) {
+        for (let x = 0; x < displayW; x += spacing) {
+          const idx = (y * displayW + x) * 4;
+          const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+          const brightness = (r + g + b) / 765; // 0 (dark) → 1 (light)
 
-          // Sample luminance from the centre pixel of this cell
-          const px = Math.min(cx + Math.floor(C / 2), displayW - 1);
-          const py = Math.min(cy + Math.floor(C / 2), displayH - 1);
-          const idx = (py * displayW + px) * 4;
-          const lum = 0.299 * imgData.data[idx]
-                    + 0.587 * imgData.data[idx + 1]
-                    + 0.114 * imgData.data[idx + 2];
+          // Only draw dots in mid-to-bright areas for a natural halftone feel
+          const opacity = brightness * maxOpacity;
 
-          // Place a dot only where the photo is darker than the Bayer threshold
-          if (lum < threshold) {
-            dCtx.beginPath();
-            dCtx.arc(cx + C / 2, cy + C / 2, C * 0.4, 0, Math.PI * 2);
-            dCtx.fill();
-          }
+          ctx.beginPath();
+          ctx.arc(x, y, dotSize / 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+          ctx.fill();
         }
       }
-
-      // Step 4 — composite dot layer at low opacity over the original photo
-      ctx.globalAlpha = HALFTONE_OPACITY;
-      ctx.drawImage(dot, 0, 0);
-      ctx.globalAlpha = 1;
+      ctx.restore();
     };
 
     img.src = src;
