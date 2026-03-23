@@ -50,8 +50,8 @@
   gap: 5px;
   padding: 5px 12px;
   border-radius: 999px;
-  background: #3a6b4e;
-  color: #fff;
+  background: #7a5c3e;
+  color: #f5ede0;
   border: none;
   cursor: pointer;
   font-size: 12px;
@@ -62,7 +62,7 @@
 }
 
 .saveBtn:hover {
-  background: #2e5640;
+  background: #634a30;
   transform: scale(1.03);
 }
 

@@ -54,7 +54,9 @@
       "Bash(curl -s -o /Users/harshita.singh/Desktop/journal/public/static/book-cover-left.png \"https://www.figma.com/api/mcp/asset/5632c59f-5fb3-440a-9c29-3d05e9ed7060\")",
       "Bash(curl -s -o /Users/harshita.singh/Desktop/journal/public/static/book-clip.png \"https://www.figma.com/api/mcp/asset/30f5ef96-d9b5-4346-8899-0e49502855bc\")",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Pencil, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useBooksStore } from '@/stores/booksStore';
 import { usePagesStore } from '@/stores/pagesStore';
 import { THEME_HEX } from '@/types/book';
@@ -21,7 +21,6 @@ export default function BookView() {
   const addPage = usePagesStore((s) => s.addPage);
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [mode, setMode] = useState<'view' | 'edit'>('view');
 
 
   const hasEmptyPage = pages.some(

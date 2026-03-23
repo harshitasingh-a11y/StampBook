@@ -132,11 +132,10 @@ function DitheredImage({ src, className }: { src: string; className?: string }) 
 interface StampImageAreaProps {
   stamp: Stamp | null;
   pageId: string;
-  isNewPage: boolean;
   editable?: boolean;
 }
 
-function StampImageArea({ stamp, pageId, isNewPage, editable }: StampImageAreaProps) {
+function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
   const setStamp = usePagesStore((s) => s.setStamp);
   const removeStamp = usePagesStore((s) => s.removeStamp);
   const uid = useBooksStore((s) => s.uid);
@@ -296,16 +295,18 @@ function StampImageArea({ stamp, pageId, isNewPage, editable }: StampImageAreaPr
                 src={clip}
                 className={styles.stampVideo}
                 style={{ display: i === clipIndex ? 'block' : 'none' }}
-                autoPlay={i === 0}
                 muted
                 playsInline
                 preload="auto"
+                onCanPlay={(e) => { if (i === clipIndex) e.currentTarget.play().catch(() => {}); }}
                 onEnded={i === clipIndex ? handleVideoEnded : undefined}
               />
             ))}
           </>
-        ) : hasMedia ? (
+        ) : hasMedia && !isVideo ? (
           <DitheredImage src={stamp!.mediaUrl!} className={styles.stampPhoto} />
+        ) : hasMedia ? (
+          <img src={stamp!.mediaUrl!} alt="" className={styles.stampPhoto} />
         ) : (
           <div className={styles.stampImgBlank}>
             <Camera size={16} className={styles.stampAddIcon} />
@@ -468,7 +469,7 @@ function RightFace({ page, accentColor, idx, editable }: { page: Page; accentCol
       <div className={styles.faceInner}>
         <div className={styles.stampWrap}>
           <div className={styles.stamp}>
-            <StampImageArea stamp={stamp} pageId={page.id} isNewPage={!isExistingPage} editable={editable} />
+            <StampImageArea stamp={stamp} pageId={page.id} editable={editable} />
             <div className={styles.stampMeta}>
               <div className={styles.stampTexts}>
                 <span
