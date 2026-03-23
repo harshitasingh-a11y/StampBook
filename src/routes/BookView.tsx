@@ -6,7 +6,6 @@ import { useBooksStore } from '@/stores/booksStore';
 import { usePagesStore } from '@/stores/pagesStore';
 import { THEME_HEX } from '@/types/book';
 import PageFlipContainer from '@/components/PageFlipContainer/PageFlipContainer';
-import PageCanvas from '@/components/PageCanvas/PageCanvas';
 import styles from './BookView.module.css';
 
 export default function BookView() {
