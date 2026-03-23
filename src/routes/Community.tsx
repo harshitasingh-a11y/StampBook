@@ -23,6 +23,7 @@ export default function Community() {
         <div>
           <h1 className={styles.title}>Community</h1>
           <p className={styles.subtitle}>Browse and save templates from other makers</p>
+          <span className={styles.wip}>Work in progress</span>
         </div>
 
         <div className={styles.filters}>

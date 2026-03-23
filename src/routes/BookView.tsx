@@ -169,15 +169,21 @@ export default function BookView() {
 
       {/* Page area */}
       {pages.length > 0 ? (
-        <PageFlipContainer
-          pages={pages}
-          accentColor={accentColor}
-          currentIndex={currentPage}
-          onIndexChange={setCurrentPage}
-          readOnly={isSharedView && !editAccess}
-          onUpdateText={isSharedView && editAccess && ownerUid ? handleUpdateJournalText : undefined}
-          onDeletePage={isSharedView && editAccess && ownerUid ? handleDeletePage : undefined}
-        />
+        <>
+          <PageFlipContainer
+            pages={pages}
+            accentColor={accentColor}
+            currentIndex={currentPage}
+            onIndexChange={setCurrentPage}
+            readOnly={isSharedView && !editAccess}
+            onUpdateText={isSharedView && editAccess && ownerUid ? handleUpdateJournalText : undefined}
+            onDeletePage={isSharedView && editAccess && ownerUid ? handleDeletePage : undefined}
+          />
+          {/* Keyboard Tip */}
+          <div className={styles.keyboardTip}>
+            Use arrow keys <span className={styles.arrow}>←</span> <span className={styles.arrow}>→</span> to turn pages
+          </div>
+        </>
       ) : (
         <div className={styles.empty}>
           <p className={styles.emptyText}>No pages yet</p>
