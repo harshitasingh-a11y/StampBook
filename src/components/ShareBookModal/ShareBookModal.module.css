@@ -193,3 +193,16 @@
 .shareBtn:active {
   transform: scale(0.98);
 }
+
+@media (max-width: 479px) {
+  .overlay {
+    align-items: flex-end;
+  }
+
+  .modal {
+    max-width: none;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+}

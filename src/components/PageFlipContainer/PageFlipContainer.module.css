@@ -96,6 +96,7 @@
   justify-content: center;
   padding: 24px 16px 48px;
   min-height: 0;
+  touch-action: pan-y;
 }
 
 /* ── Scene (provides 3D perspective) ─────────────────────────── */
@@ -116,6 +117,46 @@
   --cy: 34px;   /* vertical bleed per side   */
   width:  calc(var(--bh) * 1.44 + var(--cx) * 2);
   height: calc(var(--bh) + var(--cy) * 2);
+}
+
+@media (max-width: 767px) {
+  .container {
+    padding: 16px 8px 72px;
+  }
+
+  .bookShell {
+    /* Scale book to fit mobile viewport width:
+       total_width = --bh * 1.44 + 2 * --cx  ≤  100vw - 16px
+       → --bh = (100vw - 16px - 2 * --cx) / 1.44 */
+    --cx: 20px;
+    --cy: 20px;
+    --bh: min(calc((100vw - 56px) / 1.44), 65dvh, 380px);
+  }
+
+  /* Hide nav arrows on mobile — swipe gestures handle navigation */
+  .navZone {
+    display: none;
+  }
+
+  .pageIndicator {
+    bottom: -56px;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .progressBar {
+    width: 80px;
+  }
+
+  .pageActions {
+    top: -32px;
+  }
+
+  .binderClip {
+    top: -40px;
+    width: 60px;
+    height: 48px;
+  }
 }
 
 /* ── Cover background — fills the entire shell ────────────────── */

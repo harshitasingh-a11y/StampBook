@@ -74,7 +74,7 @@
   gap: var(--spacing-grid);
 }
 
-@media (max-width: 599px) {
+@media (max-width: 767px) {
   .page {
     padding: var(--spacing-lg) var(--spacing-md) 72px;
   }

@@ -1,6 +1,12 @@
 .page {
   flex: 1;
-  padding: var(--spacing-lg) var(--spacing-grid) var(--spacing-lg) calc(72px + var(--spacing-grid));
+  padding: var(--spacing-lg) var(--spacing-grid);
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: var(--spacing-lg) var(--spacing-md) 72px;
+  }
 }
 
 .title {

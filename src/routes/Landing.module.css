@@ -146,16 +146,16 @@
 }
 
 .dot1 {
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: #ACB8BB;
   margin-right: -4px;
 }
 
 .dot2 {
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: #EBD790;
   mix-blend-mode: multiply;
@@ -172,27 +172,30 @@
   justify-content: center;
   padding: 60px 56px;
   text-align: center;
-  gap: 20px;
+  gap: 0;
+  margin-top: -40px;
 }
 
 .logo {
   width: 80px;
   height: 80px;
   object-fit: contain;
+  margin-bottom: 20px;
 }
 
 .title {
-  font-family: 'MicrogrammaD', sans-serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-size: 40px;
-  color: #2c2c2c;
-  letter-spacing: 0.02em;
-  margin: 0;
+  color: #867A6A;
+  margin: 0 0 20px 0;
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 .tagline {
-  font-size: 18px;
-  color: #7a6f65;
+  font-family: 'Caveat', cursive;
+  font-size: 22px;
+  color: #867A6A;
   margin: 0;
   font-weight: 500;
 }
@@ -205,10 +208,11 @@
 }
 
 .description {
-  font-size: 16px;
-  line-height: 1.7;
-  color: #5a5550;
-  margin: 0;
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  line-height: 1.4;
+  color: #867A6A;
+  margin: 0 0 40px 0;
   max-width: 380px;
 }
 
@@ -217,23 +221,22 @@
   align-items: center;
   gap: 12px;
   padding: 14px 28px;
-  border: 1.5px solid #d4ccc4;
+  border: none;
   border-radius: 12px;
-  background: #fff;
+  background: #867A6A;
   font-size: 15px;
   font-weight: 500;
-  color: #2c2c2c;
+  color: #fff;
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s, border-color 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
   justify-content: center;
   font-family: inherit;
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .googleBtn:hover {
-  background: #f5f0eb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #c4bbb3;
+  background: #726558;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .googleBtn:active {

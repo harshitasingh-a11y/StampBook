@@ -3,6 +3,12 @@
   padding: var(--spacing-lg) var(--spacing-grid);
 }
 
+@media (max-width: 767px) {
+  .page {
+    padding: var(--spacing-lg) var(--spacing-md) 72px;
+  }
+}
+
 .title {
   font-family: var(--font-heading);
   font-size: clamp(1.5rem, 4vw, 2.2rem);

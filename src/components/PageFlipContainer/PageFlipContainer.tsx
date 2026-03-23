@@ -377,8 +377,17 @@ function LeftFace({ page, idx, editable, onTextSave, onEditingChange }: LeftFace
     setEditing(false);
   }, [page.id]);
 
-  const paragraphs = page.journalText?.split('\n\n') ?? [];
-  const isEmpty = !page.journalText?.trim();
+  // Sync draftText when journalText is updated externally (e.g. shared view save propagation)
+  useEffect(() => {
+    if (!editing) {
+      setDraftText(page.journalText ?? '');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page.journalText]);
+
+  // Use draftText for display so the UI updates immediately after save (before prop propagation)
+  const paragraphs = draftText.split('\n\n');
+  const isEmpty = !draftText.trim();
 
   const handleBodyClick = () => {
     if (!editable) return;
@@ -573,6 +582,24 @@ export default function PageFlipContainer({ pages, accentColor, currentIndex, on
     return () => window.removeEventListener('keydown', onKey);
   }, [goForward, goBack, isEditingText]);
 
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (isFlipping || isEditingText) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      if (dx < 0) goForward();
+      else goBack();
+    }
+  }, [isFlipping, isEditingText, goForward, goBack]);
+
   if (!pages[currentIndex]) return null;
 
   /*
@@ -605,7 +632,11 @@ export default function PageFlipContainer({ pages, accentColor, currentIndex, on
   const rightStaticIdx  = flip?.dir ===  1 ? flip.toIdx   : (flip?.fromIdx ?? currentIndex);
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
 
       <div className={styles.scene}>
         <div className={styles.bookShell}>

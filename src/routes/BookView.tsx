@@ -90,27 +90,26 @@ export default function BookView() {
 
   // Create wrapper functions for shared book editing
   const handleUpdateJournalText = useCallback((pageId: string, text: string) => {
-    const updateFn = usePagesStore.getState().updateJournalText;
     if (isSharedView && editAccess && ownerUid) {
-      // Update local state first for instant UI feedback
-      updateFn(pageId, text);
+      // Update sharedPages local state for instant UI feedback
+      setSharedPages((prev) => prev.map((p) => p.id === pageId ? { ...p, journalText: text } : p));
       // Save to owner's Firestore collection
       const page = sharedPages.find((p) => p.id === pageId);
       if (page) {
         savePage(ownerUid, { ...page, journalText: text });
       }
     } else {
-      updateFn(pageId, text);
+      usePagesStore.getState().updateJournalText(pageId, text);
     }
   }, [isSharedView, editAccess, ownerUid, sharedPages]);
 
   const handleDeletePage = useCallback((pageId: string) => {
-    const deleteFn = usePagesStore.getState().deletePage;
     if (isSharedView && editAccess && ownerUid) {
-      deleteFn(pageId);
+      // Update sharedPages local state
+      setSharedPages((prev) => prev.filter((p) => p.id !== pageId));
       fbDeletePage(ownerUid, pageId);
     } else {
-      deleteFn(pageId);
+      usePagesStore.getState().deletePage(pageId);
     }
   }, [isSharedView, editAccess, ownerUid]);
 
