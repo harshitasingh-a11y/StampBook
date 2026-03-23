@@ -2,16 +2,18 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute/ProtectedRoute';
 import ShellLayout from '@/components/ShellLayout/ShellLayout';
-import Login from '@/routes/Login';
+import Landing from '@/routes/Landing';
 import Collection from '@/routes/Collection';
 import Create from '@/routes/Create';
 import Inbox from '@/routes/Inbox';
 import Community from '@/routes/Community';
 import BookView from '@/routes/BookView';
 import { useFirestoreSync } from '@/hooks/useFirestoreSync';
+import { useAssetPreloader } from '@/hooks/useAssetPreloader';
 
 function FirestoreSync() {
   useFirestoreSync();
+  useAssetPreloader();
   return null;
 }
 
@@ -21,7 +23,8 @@ export default function App() {
       <BrowserRouter>
         <FirestoreSync />
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Landing />} />
+          <Route path="/landing" element={<Landing />} />
           <Route
             path="/book/:bookId"
             element={

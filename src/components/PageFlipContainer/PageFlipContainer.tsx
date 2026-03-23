@@ -7,6 +7,7 @@ import { usePagesStore } from '@/stores/pagesStore';
 import { useBooksStore } from '@/stores/booksStore';
 import { uploadMedia } from '@/lib/storageService';
 import { playPageFlip } from '@/utils/playPageFlip';
+import { useAssetUrl, useAssetUrls } from '@/hooks/useAssetUrl';
 import PaperTexture from '@/components/PaperTexture/PaperTexture';
 import styles from './PageFlipContainer.module.css';
 
@@ -27,13 +28,14 @@ function getVideoDuration(file: File): Promise<number> {
 
 function DitheredImage({ src, className }: { src: string; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cachedSrc = useAssetUrl(src);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !src) return;
+    if (!canvas || !cachedSrc) return;
 
     const img = new Image();
-    if (!src.startsWith('blob:') && !src.startsWith('data:')) {
+    if (!cachedSrc.startsWith('blob:') && !cachedSrc.startsWith('data:')) {
       img.crossOrigin = 'anonymous';
     }
 
@@ -93,10 +95,63 @@ function DitheredImage({ src, className }: { src: string; className?: string }) 
       ctx.restore();
     };
 
-    img.src = src;
-  }, [src]);
+    img.src = cachedSrc;
+  }, [cachedSrc]);
 
   return <canvas ref={canvasRef} className={className} />;
+}
+
+// ─── VideoPlayer component for handling multiple video clips with caching ────
+
+interface VideoPlayerProps {
+  clips: string[];
+}
+
+function VideoPlayer({ clips }: VideoPlayerProps) {
+  const [clipIndex, setClipIndex] = useState(0);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  // Get cached URLs for all clips
+  const cachedClips = useAssetUrls(clips);
+
+  useEffect(() => {
+    clips.forEach((_, i) => {
+      const v = videoRefs.current[i];
+      if (!v) return;
+      if (i === clipIndex) {
+        v.currentTime = 0;
+        v.play().catch(() => {});
+      } else {
+        v.pause();
+        v.currentTime = 0;
+      }
+    });
+  }, [clipIndex, clips.length]);
+
+  const handleVideoEnded = () => setClipIndex((i) => (i + 1) % clips.length);
+
+  return (
+    <>
+      {cachedClips.map((cachedClip, i) => (
+        <video
+          key={clips[i]}
+          ref={(el) => {
+            videoRefs.current[i] = el;
+          }}
+          src={cachedClip ?? clips[i]}
+          className={styles.stampVideo}
+          style={{ display: i === clipIndex ? 'block' : 'none' }}
+          muted
+          playsInline
+          preload="auto"
+          onCanPlay={(e) => {
+            if (i === clipIndex) e.currentTarget.play().catch(() => {});
+          }}
+          onEnded={i === clipIndex ? handleVideoEnded : undefined}
+        />
+      ))}
+    </>
+  );
 }
 
 // ─── StampImageArea ───────────────────────────────────────────────────────────
@@ -114,7 +169,6 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const [hovered, setHovered] = useState(false);
-  const [clipIndex, setClipIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const imgAreaRef = useRef<HTMLDivElement>(null);
@@ -122,11 +176,11 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const editVideoInputRef = useRef<HTMLInputElement>(null);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const clips = stamp?.videoClips ?? [];
   const hasMedia = !!stamp?.mediaUrl;
   const isVideo = stamp?.mediaType === 'video';
+  const cachedMediaUrl = useAssetUrl(stamp?.mediaUrl ?? null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -138,21 +192,6 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  // Switch clips instantly — all videos are pre-loaded, just play/pause
-  useEffect(() => {
-    clips.forEach((_, i) => {
-      const v = videoRefs.current[i];
-      if (!v) return;
-      if (i === clipIndex) {
-        v.currentTime = 0;
-        v.play().catch(() => {});
-      } else {
-        v.pause();
-        v.currentTime = 0;
-      }
-    });
-  }, [clipIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAreaClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -209,7 +248,6 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
       return;
     }
     setStamp(pageId, 0, { mediaUrl: allClips[0], mediaType: 'video', videoClips: allClips });
-    setClipIndex(0);
     setDropdownOpen(false);
   };
 
@@ -231,7 +269,6 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     removeStamp(pageId, 0);
-    setClipIndex(0);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -242,8 +279,6 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
       imageInputRef.current?.click();
     }
   };
-
-  const handleVideoEnded = () => setClipIndex((i) => (i + 1) % clips.length);
 
   return (
     <div className={styles.stampImgWrap}>
@@ -259,26 +294,11 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
             <div className={styles.uploadSpinner} />
           </div>
         ) : isVideo && clips.length > 0 ? (
-          <>
-            {clips.map((clip, i) => (
-              <video
-                key={clip}
-                ref={(el) => { videoRefs.current[i] = el; }}
-                src={clip}
-                className={styles.stampVideo}
-                style={{ display: i === clipIndex ? 'block' : 'none' }}
-                muted
-                playsInline
-                preload="auto"
-                onCanPlay={(e) => { if (i === clipIndex) e.currentTarget.play().catch(() => {}); }}
-                onEnded={i === clipIndex ? handleVideoEnded : undefined}
-              />
-            ))}
-          </>
+          <VideoPlayer clips={clips} />
         ) : hasMedia && !isVideo ? (
           <DitheredImage src={stamp!.mediaUrl!} className={styles.stampPhoto} />
         ) : hasMedia ? (
-          <img src={stamp!.mediaUrl!} alt="" className={styles.stampPhoto} />
+          <img src={cachedMediaUrl ?? stamp!.mediaUrl!} alt="" className={styles.stampPhoto} />
         ) : (
           <div className={styles.stampImgBlank}>
             <Camera size={16} className={styles.stampAddIcon} />

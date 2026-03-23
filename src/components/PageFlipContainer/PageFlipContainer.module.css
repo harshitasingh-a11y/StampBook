@@ -400,9 +400,9 @@
 }
 
 .facePlaceholder {
-  font-family: 'Lora', 'Georgia', serif;
-  font-size: clamp(8px, 1.25dvh, 13px);
-  line-height: 1.85;
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  line-height: 1.5;
   color: #c0ae98;
   font-style: italic;
   user-select: none;
@@ -417,9 +417,9 @@
   border: none;
   outline: none;
   resize: none;
-  font-family: 'Lora', 'Georgia', serif;
-  font-size: clamp(8px, 1.25dvh, 13px);
-  line-height: 1.85;
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  line-height: 1.5;
   color: #4a3f35;
   caret-color: #4a3f35;
   position: relative;
@@ -434,9 +434,9 @@
 }
 
 .facePara {
-  font-family: 'Lora', 'Georgia', serif;
-  font-size: clamp(8px, 1.25dvh, 13px);
-  line-height: 1.85;
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  line-height: 1.5;
   color: #4a3f35;
   text-align: justify;
   hyphens: auto;
@@ -445,14 +445,11 @@
 
 /* Drop cap on first paragraph */
 .dropcap::first-letter {
-  float: left;
-  font-family: 'Cormorant Garamond', 'Georgia', serif;
-  font-size: clamp(28px, 5dvh, 52px);
-  line-height: 0.8;
-  padding-right: 5px;
-  padding-top: 3px;
-  color: #3a2f25;
-  font-weight: 600;
+  font-family: 'Caveat', cursive;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  font-weight: inherit;
 }
 
 /* ── Postage stamp (right face) — Paper MCP design ───────────── */
