@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Share2, Pencil, Trash2 } from 'lucide-react';
 import type { Page, Stamp } from '@/types/page';
 import { usePagesStore } from '@/stores/pagesStore';
 import styles from './PageCanvas.module.css';
@@ -14,24 +14,56 @@ interface PageCanvasProps {
 // Matches the Paper MCP design: perforated edge, sage-green image area, text, dots
 interface StampProps {
   stamp: Stamp | null;
-  location: string;
-  year: string;
+  stampTitle: string;
+  stampSubheading: string;
+  onTitleChange: (val: string) => void;
+  onSubheadingChange: (val: string) => void;
 }
 
-function PostageStamp({ stamp, location, year }: StampProps) {
-  const title = location.toUpperCase().replace(', SRI LANKA', '').trim();
+function PostageStamp({ stamp, stampTitle, stampSubheading, onTitleChange, onSubheadingChange }: StampProps) {
+  const titleRef = useRef<HTMLSpanElement>(null);
+  const subRef = useRef<HTMLSpanElement>(null);
+
+  // Set initial content via ref so React doesn't fight with contentEditable DOM
+  useEffect(() => {
+    if (titleRef.current && titleRef.current.textContent !== stampTitle) {
+      titleRef.current.textContent = stampTitle;
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (subRef.current && subRef.current.textContent !== stampSubheading) {
+      subRef.current.textContent = stampSubheading;
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={styles.stamp}>
       <div className={styles.stampImageArea}>
         {stamp?.mediaUrl ? (
-          <img src={stamp.mediaUrl} className={styles.stampPhoto} alt={title} />
+          <img src={stamp.mediaUrl} className={styles.stampPhoto} alt={stampTitle} />
         ) : null}
       </div>
       <div className={styles.stampInfo}>
         <div className={styles.stampTexts}>
-          <span className={styles.stampTitle}>{title}</span>
-          <span className={styles.stampYear}>{year}</span>
+          <span
+            ref={titleRef}
+            className={styles.stampTitle}
+            contentEditable
+            suppressContentEditableWarning
+            data-placeholder="Add Stamp Title"
+            onBlur={(e) => onTitleChange(e.currentTarget.textContent ?? '')}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span
+            ref={subRef}
+            className={styles.stampYear}
+            contentEditable
+            suppressContentEditableWarning
+            data-placeholder="Add subheading"
+            onBlur={(e) => onSubheadingChange(e.currentTarget.textContent ?? '')}
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
         <div className={styles.stampDots}>
           <div className={styles.dot1} />
@@ -47,16 +79,45 @@ function PostageStamp({ stamp, location, year }: StampProps) {
 export default function PageCanvas({ page, accentColor }: PageCanvasProps) {
   const [toolbarOpen, setToolbarOpen] = useState(false);
   const updateStampCount = usePagesStore((s) => s.updateStampCount);
+  const updateStampTitle = usePagesStore((s) => s.updateStampTitle);
+  const updateStampSubheading = usePagesStore((s) => s.updateStampSubheading);
 
   const firstStamp = page.stamps[0] ?? null;
-  const location = page.postmarkLocation ?? 'Location';
-  const year = page.postmarkDate.slice(0, 4);
+  const stampTitle = page.stampTitle ?? '';
+  const stampSubheading = page.stampSubheading ?? '';
 
   return (
     <div className={styles.spread} onClick={() => setToolbarOpen((p) => !p)}>
 
-      {/* Left page — blank */}
-      <div className={styles.leftPage} />
+      {/* Page action icons — top right */}
+      <div className={styles.pageActions} onClick={(e) => e.stopPropagation()}>
+        {[
+          { icon: <Share2 size={15} />, label: 'Share this page' },
+          { icon: <Pencil size={15} />, label: 'Edit this page' },
+          { icon: <Trash2 size={15} />, label: 'Delete this page', danger: true },
+        ].map(({ icon, label, danger }) => (
+          <div key={label} className={styles.actionWrap}>
+            <button
+              className={`${styles.actionBtn} ${danger ? styles.actionBtnDanger : ''}`}
+              aria-label={label}
+            >
+              {icon}
+            </button>
+            <span className={styles.tooltip}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Left page — journal text */}
+      <div className={styles.leftPage}>
+        {page.journalText ? (
+          <div className={styles.journalText}>
+            {page.journalText.split('\n\n').map((para, i) => (
+              <p key={i} className={styles.journalPara}>{para}</p>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       {/* Spine shadow */}
       <div className={styles.spine} />
@@ -64,7 +125,13 @@ export default function PageCanvas({ page, accentColor }: PageCanvasProps) {
       {/* Right page — stamp */}
       <div className={styles.rightPage}>
         <div className={styles.stampWrap}>
-          <PostageStamp stamp={firstStamp} location={location} year={year} />
+          <PostageStamp
+            stamp={firstStamp}
+            stampTitle={stampTitle}
+            stampSubheading={stampSubheading}
+            onTitleChange={(val) => updateStampTitle(page.id, val)}
+            onSubheadingChange={(val) => updateStampSubheading(page.id, val)}
+          />
         </div>
 
         {/* Postmark */}

@@ -1,115 +1,812 @@
-import { useState, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Page } from '@/types/page';
-import PageCanvas from '@/components/PageCanvas/PageCanvas';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Camera, ImageIcon, Film, Share2, Pencil, Trash2, Check } from 'lucide-react';
+import type { Page, Stamp } from '@/types/page';
+import { usePagesStore } from '@/stores/pagesStore';
+import { useBooksStore } from '@/stores/booksStore';
+import { uploadMedia } from '@/lib/storageService';
 import { playPageFlip } from '@/utils/playPageFlip';
+import PaperTexture from '@/components/PaperTexture/PaperTexture';
 import styles from './PageFlipContainer.module.css';
 
-// Open book visual — saved locally in public/static/
-const ASSET_BOOK = '/static/book.png';
-const ASSET_CLIP = '/static/clip.svg';
-const ASSET_TEX_LEFT = '/static/tex-left.png';
-const ASSET_TEX_RIGHT_BACK = '/static/tex-right-back.png';
-const ASSET_TEX_RIGHT = '/static/tex-right.png';
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-interface PageFlipContainerProps {
+function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const vid = document.createElement('video');
+    vid.preload = 'metadata';
+    vid.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(vid.duration); };
+    vid.onerror = () => resolve(Infinity);
+    vid.src = url;
+  });
+}
+
+// ─── Bayer halftone overlay ────────────────────────────────────────────────────
+
+const BAYER_8 = [
+  [  0, 128,  32, 160,   8, 136,  40, 168],
+  [192,  64, 224,  96, 200,  72, 232, 104],
+  [ 48, 176,  16, 144,  56, 184,  24, 152],
+  [240, 112, 208,  80, 248, 120, 216,  88],
+  [ 12, 140,  44, 172,   4, 132,  36, 164],
+  [204,  76, 236, 108, 196,  68, 228, 100],
+  [ 60, 188,  28, 156,  52, 180,  20, 148],
+  [252, 124, 220,  92, 244, 116, 212,  84],
+] as const;
+
+// Cell size in px — each Bayer cell is 3×3 pixels, dot radius ≤ 1.2px
+const HALFTONE_CELL = 3;
+// Opacity of the dot overlay (0 = invisible, 1 = fully opaque)
+const HALFTONE_OPACITY = 0.18;
+
+function DitheredImage({ src, className }: { src: string; className?: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !src) return;
+
+    const img = new Image();
+    if (!src.startsWith('blob:') && !src.startsWith('data:')) {
+      img.crossOrigin = 'anonymous';
+    }
+
+    img.onload = () => {
+      const displayW = canvas.parentElement?.offsetWidth  ?? img.naturalWidth;
+      const displayH = canvas.parentElement?.offsetHeight ?? img.naturalHeight;
+
+      // object-fit: cover crop math
+      const imgAspect = img.naturalWidth / img.naturalHeight;
+      const canAspect = displayW / displayH;
+      let sx: number, sy: number, sw: number, sh: number;
+      if (imgAspect > canAspect) {
+        sh = img.naturalHeight; sw = sh * canAspect;
+        sx = (img.naturalWidth  - sw) / 2; sy = 0;
+      } else {
+        sw = img.naturalWidth;  sh = sw / canAspect;
+        sx = 0; sy = (img.naturalHeight - sh) / 2;
+      }
+
+      canvas.width  = displayW;
+      canvas.height = displayH;
+      const ctx = canvas.getContext('2d')!;
+
+      // Step 1 — draw original photo at full quality
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, displayW, displayH);
+
+      // Step 2 — read luminance to build dot overlay
+      let imgData: ImageData;
+      try {
+        imgData = ctx.getImageData(0, 0, displayW, displayH);
+      } catch {
+        return; // CORS blocked — original photo already drawn, nothing more to do
+      }
+
+      // Step 3 — paint halftone dots into an offscreen canvas
+      const dot = document.createElement('canvas');
+      dot.width = displayW; dot.height = displayH;
+      const dCtx = dot.getContext('2d')!;
+      dCtx.fillStyle = 'rgb(28, 18, 8)'; // very dark warm brown dot colour
+
+      const C = HALFTONE_CELL;
+      for (let cy = 0; cy < displayH; cy += C) {
+        for (let cx = 0; cx < displayW; cx += C) {
+          // Bayer threshold for this cell (0–252)
+          const bx = Math.floor(cx / C) % 8;
+          const by = Math.floor(cy / C) % 8;
+          const threshold = BAYER_8[by][bx];
+
+          // Sample luminance from the centre pixel of this cell
+          const px = Math.min(cx + Math.floor(C / 2), displayW - 1);
+          const py = Math.min(cy + Math.floor(C / 2), displayH - 1);
+          const idx = (py * displayW + px) * 4;
+          const lum = 0.299 * imgData.data[idx]
+                    + 0.587 * imgData.data[idx + 1]
+                    + 0.114 * imgData.data[idx + 2];
+
+          // Place a dot only where the photo is darker than the Bayer threshold
+          if (lum < threshold) {
+            dCtx.beginPath();
+            dCtx.arc(cx + C / 2, cy + C / 2, C * 0.4, 0, Math.PI * 2);
+            dCtx.fill();
+          }
+        }
+      }
+
+      // Step 4 — composite dot layer at low opacity over the original photo
+      ctx.globalAlpha = HALFTONE_OPACITY;
+      ctx.drawImage(dot, 0, 0);
+      ctx.globalAlpha = 1;
+    };
+
+    img.src = src;
+  }, [src]);
+
+  return <canvas ref={canvasRef} className={className} />;
+}
+
+// ─── StampImageArea ───────────────────────────────────────────────────────────
+
+interface StampImageAreaProps {
+  stamp: Stamp | null;
+  pageId: string;
+  isNewPage: boolean;
+  editable?: boolean;
+}
+
+function StampImageArea({ stamp, pageId, isNewPage, editable }: StampImageAreaProps) {
+  const setStamp = usePagesStore((s) => s.setStamp);
+  const removeStamp = usePagesStore((s) => s.removeStamp);
+  const uid = useBooksStore((s) => s.uid);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const [hovered, setHovered] = useState(false);
+  const [clipIndex, setClipIndex] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const imgAreaRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const editVideoInputRef = useRef<HTMLInputElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  const clips = stamp?.videoClips ?? [];
+  const hasMedia = !!stamp?.mediaUrl;
+  const isVideo = stamp?.mediaType === 'video';
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const inImg = imgAreaRef.current?.contains(e.target as Node);
+      const inDrop = dropdownRef.current?.contains(e.target as Node);
+      if (!inImg && !inDrop) setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Switch clips instantly — all videos are pre-loaded, just play/pause
+  useEffect(() => {
+    clips.forEach((_, i) => {
+      const v = videoRefs.current[i];
+      if (!v) return;
+      if (i === clipIndex) {
+        v.currentTime = 0;
+        v.play().catch(() => {});
+      } else {
+        v.pause();
+        v.currentTime = 0;
+      }
+    });
+  }, [clipIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAreaClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!editable) return;
+    if (hasMedia) return; // has media: use hover icons instead
+    if (!dropdownOpen && imgAreaRef.current) {
+      const rect = imgAreaRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 10, left: rect.left + rect.width / 2 });
+    }
+    setDropdownOpen((o) => !o);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uid) return;
+    setDropdownOpen(false);
+    setUploading(true);
+    try {
+      const url = await uploadMedia(uid, pageId, file);
+      setStamp(pageId, 0, { mediaUrl: url, mediaType: 'photo', videoClips: undefined });
+    } catch {
+      setError('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const processVideoFiles = async (files: File[], existingClips: string[] = []) => {
+    if (!uid) return;
+    setError(null);
+    setUploading(true);
+    const validClips: string[] = [];
+    const skipped: string[] = [];
+    const remaining = 4 - existingClips.length;
+
+    for (const file of files.slice(0, remaining)) {
+      const dur = await getVideoDuration(file);
+      if (dur > 5) { skipped.push(file.name); continue; }
+      try {
+        const url = await uploadMedia(uid, pageId, file);
+        validClips.push(url);
+      } catch {
+        skipped.push(file.name);
+      }
+    }
+
+    setUploading(false);
+    if (skipped.length) setError(`Skipped (>5s or failed): ${skipped.join(', ')}`);
+
+    const allClips = [...existingClips, ...validClips];
+    if (allClips.length === 0) {
+      setError('All videos exceed 5 seconds. Please choose shorter clips.');
+      return;
+    }
+    setStamp(pageId, 0, { mediaUrl: allClips[0], mediaType: 'video', videoClips: allClips });
+    setClipIndex(0);
+    setDropdownOpen(false);
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    await processVideoFiles(files);
+    e.target.value = '';
+  };
+
+  const handleEditVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    // Add to existing clips (up to 4 total)
+    await processVideoFiles(files, clips);
+    e.target.value = '';
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeStamp(pageId, 0);
+    setClipIndex(0);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isVideo) {
+      editVideoInputRef.current?.click();
+    } else {
+      imageInputRef.current?.click();
+    }
+  };
+
+  const handleVideoEnded = () => setClipIndex((i) => (i + 1) % clips.length);
+
+  return (
+    <div className={styles.stampImgWrap}>
+      <div
+        ref={imgAreaRef}
+        className={`${styles.stampImg} ${!hasMedia && editable ? styles.stampImgClickable : ''}`}
+        onClick={handleAreaClick}
+        onMouseEnter={() => editable && setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {uploading ? (
+          <div className={styles.stampImgBlank}>
+            <div className={styles.uploadSpinner} />
+          </div>
+        ) : isVideo && clips.length > 0 ? (
+          <>
+            {clips.map((clip, i) => (
+              <video
+                key={clip}
+                ref={(el) => { videoRefs.current[i] = el; }}
+                src={clip}
+                className={styles.stampVideo}
+                style={{ display: i === clipIndex ? 'block' : 'none' }}
+                autoPlay={i === 0}
+                muted
+                playsInline
+                preload="auto"
+                onEnded={i === clipIndex ? handleVideoEnded : undefined}
+              />
+            ))}
+          </>
+        ) : hasMedia ? (
+          <DitheredImage src={stamp!.mediaUrl!} className={styles.stampPhoto} />
+        ) : (
+          <div className={styles.stampImgBlank}>
+            <Camera size={16} className={styles.stampAddIcon} />
+          </div>
+        )}
+
+        {/* Edit / Delete overlay — shown on hover when media exists and editable */}
+        {hasMedia && hovered && editable && (
+          <div className={styles.mediaOverlay} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.mediaOverlayBtn} onClick={handleEdit} title={isVideo ? 'Add more clips' : 'Replace image'}>
+              <Pencil size={12} />
+            </button>
+            <button className={`${styles.mediaOverlayBtn} ${styles.mediaOverlayBtnDelete}`} onClick={handleDelete} title="Remove">
+              <Trash2 size={12} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Portalled dropdown — escapes stamp's CSS mask clipping */}
+      {dropdownOpen && createPortal(
+        <div
+          ref={dropdownRef}
+          className={styles.mediaDropdown}
+          style={{ position: 'fixed', top: dropdownPos.top, left: dropdownPos.left, transform: 'translateX(-50%)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button className={styles.mediaOption} onClick={() => imageInputRef.current?.click()}>
+            <ImageIcon size={13} /> Upload Image
+          </button>
+          <button className={styles.mediaOption} onClick={() => videoInputRef.current?.click()}>
+            <Film size={13} /> Upload Videos
+          </button>
+          {error && <p className={styles.mediaError}>{error}</p>}
+        </div>,
+        document.body
+      )}
+
+      {/* Hidden file inputs */}
+      <input ref={imageInputRef} type="file" accept="image/*" hidden onChange={handleImageUpload} />
+      <input ref={videoInputRef} type="file" accept="video/*" multiple hidden onChange={handleVideoUpload} />
+      <input ref={editVideoInputRef} type="file" accept="video/*" multiple hidden onChange={handleEditVideoUpload} />
+    </div>
+  );
+}
+
+interface Props {
   pages: Page[];
   accentColor: string;
   currentIndex: number;
-  onIndexChange: (index: number) => void;
+  onIndexChange: (idx: number) => void;
 }
 
-const SWIPE_THRESHOLD = 60;
-const VELOCITY_THRESHOLD = 250;
+type Flip = { dir: 1 | -1; fromIdx: number; toIdx: number };
 
-export default function PageFlipContainer({
-  pages,
-  accentColor,
-  currentIndex,
-  onIndexChange,
-}: PageFlipContainerProps) {
-  const [direction, setDirection] = useState(0);
+/* ─── Left page face: journal text ──────────────────────────────── */
+interface LeftFaceProps {
+  page: Page;
+  idx: number;
+  editable?: boolean;
+  onTextSave?: (text: string) => void;
+  onEditingChange?: (editing: boolean) => void;
+}
 
-  const goTo = useCallback(
-    (next: number, dir: number) => {
-      if (next < 0 || next >= pages.length) return;
-      setDirection(dir);
-      onIndexChange(next);
-      playPageFlip();
-    },
-    [pages.length, onIndexChange]
-  );
+function LeftFace({ page, idx, editable, onTextSave, onEditingChange }: LeftFaceProps) {
+  const [editing, setEditing] = useState(false);
+  const [draftText, setDraftText] = useState(page.journalText ?? '');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const goForward = useCallback(() => goTo(currentIndex + 1, 1), [currentIndex, goTo]);
-  const goBackward = useCallback(() => goTo(currentIndex - 1, -1), [currentIndex, goTo]);
+  // Sync draft when navigating to a different page
+  useEffect(() => {
+    setDraftText(page.journalText ?? '');
+    setEditing(false);
+  }, [page.id]);
 
-  const handleDragEnd = useCallback(
-    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-      const { offset, velocity } = info;
-      if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) goForward();
-      else if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) goBackward();
-    },
-    [goForward, goBackward]
-  );
+  const paragraphs = page.journalText?.split('\n\n') ?? [];
+  const isEmpty = !page.journalText?.trim();
 
-  const page = pages[currentIndex];
-  if (!page) return null;
+  const handleBodyClick = () => {
+    if (!editable) return;
+    setEditing(true);
+    onEditingChange?.(true);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
 
-  const variants = {
-    enter: (d: number) => ({ x: d >= 0 ? '30%' : '-30%', opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (d: number) => ({ x: d >= 0 ? '-30%' : '30%', opacity: 0 }),
+  const handleBlur = () => {
+    setEditing(false);
+    onEditingChange?.(false);
+    onTextSave?.(draftText.trim());
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.bookFrame}>
+    <div className={styles.faceLeft}>
+      <div className={styles.faceInner}>
+        {page.postmarkDate && (
+          <p className={styles.faceDate}>{page.postmarkDate}</p>
+        )}
+        {editing ? (
+          <textarea
+            ref={textareaRef}
+            className={styles.faceTextarea}
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+            onBlur={handleBlur}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="Write something here about your memory..."
+          />
+        ) : (
+          <div
+            className={`${styles.faceBody} ${editable ? styles.faceBodyEditable : ''}`}
+            onClick={handleBodyClick}
+          >
+            {isEmpty ? (
+              <p className={styles.facePlaceholder}>Write something here about your memory...</p>
+            ) : (
+              paragraphs.map((p, i) => (
+                <p key={i} className={`${styles.facePara} ${i === 0 ? styles.dropcap : ''}`}>
+                  {p}
+                </p>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+      <div className={styles.pageNum}>{idx + 1}</div>
+    </div>
+  );
+}
 
-        {/* Layer 1: page surface textures */}
-        <img className={`${styles.tex} ${styles.texLeft}`} src={ASSET_TEX_LEFT} alt="" aria-hidden="true" />
-        <img className={`${styles.tex} ${styles.texRightBack}`} src={ASSET_TEX_RIGHT_BACK} alt="" aria-hidden="true" />
-        <img className={`${styles.tex} ${styles.texRight}`} src={ASSET_TEX_RIGHT} alt="" aria-hidden="true" />
+/* ─── Right page face: stamp + postmark ─────────────────────────── */
+function RightFace({ page, accentColor, idx, editable }: { page: Page; accentColor: string; idx: number; editable?: boolean }) {
+  const stamp = page.stamps[0] ?? null;
+  const updateStampTitle = usePagesStore((s) => s.updateStampTitle);
+  const updateStampSubheading = usePagesStore((s) => s.updateStampSubheading);
 
-        {/* Layer 2: page content */}
-        <div className={styles.pageArea}>
-          <AnimatePresence initial={false} custom={direction} mode="wait">
-            <motion.div
-              key={page.id}
-              className={styles.page}
-              custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.1}
-              onDragEnd={handleDragEnd}
-            >
-              <PageCanvas page={page} accentColor={accentColor} />
-            </motion.div>
-          </AnimatePresence>
+  const isExistingPage = !!page.postmarkLocation;
+  // Derived fallbacks for existing pages
+  const derivedTitle = isExistingPage
+    ? (page.postmarkLocation ?? '').toUpperCase().replace(', SRI LANKA', '').trim() || 'TRAVEL'
+    : '';
+  const derivedYear = isExistingPage ? page.postmarkDate.slice(0, 4) : '';
+
+  // The displayed title/year: stored override first, then derived fallback
+  const displayTitle = page.stampTitle ?? derivedTitle;
+  const displayYear  = page.stampSubheading ?? derivedYear;
+
+  const titleRef = useRef<HTMLSpanElement>(null);
+  const subRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (titleRef.current) titleRef.current.textContent = displayTitle;
+  }, [page.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (subRef.current) subRef.current.textContent = displayYear;
+  }, [page.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className={styles.faceRight}>
+      <div className={styles.faceInner}>
+        <div className={styles.stampWrap}>
+          <div className={styles.stamp}>
+            <StampImageArea stamp={stamp} pageId={page.id} isNewPage={!isExistingPage} editable={editable} />
+            <div className={styles.stampMeta}>
+              <div className={styles.stampTexts}>
+                <span
+                  ref={titleRef}
+                  className={styles.stampTitle}
+                  contentEditable={editable}
+                  suppressContentEditableWarning
+                  data-placeholder="Add Stamp Title"
+                  onBlur={(e) => editable && updateStampTitle(page.id, e.currentTarget.textContent ?? '')}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <span
+                  ref={subRef}
+                  className={styles.stampYear}
+                  contentEditable={editable}
+                  suppressContentEditableWarning
+                  data-placeholder="Add subheading"
+                  onBlur={(e) => editable && updateStampSubheading(page.id, e.currentTarget.textContent ?? '')}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div className={styles.stampDots}>
+                <div className={styles.dot1} />
+                <div className={styles.dot2} />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Layer 3: kraft border frames the content */}
-        <img className={styles.bookImg} src={ASSET_BOOK} alt="open book" aria-hidden="true" />
-
-        {/* Layer 4: binder clip */}
-        <img className={styles.clip} src={ASSET_CLIP} alt="" aria-hidden="true" />
+        <div className={styles.postmark} style={{ color: accentColor }}>
+          <div className={styles.postmarkRing}>
+            <span className={styles.postmarkDate}>{page.postmarkDate}</span>
+            {page.postmarkLocation && (
+              <span className={styles.postmarkLoc}>{page.postmarkLocation}</span>
+            )}
+          </div>
+        </div>
       </div>
+      <div className={styles.pageNum}>{idx + 1}</div>
+    </div>
+  );
+}
 
-      {currentIndex > 0 && (
-        <button className={`${styles.arrow} ${styles.arrowLeft}`} onClick={goBackward} aria-label="Previous page">
-          <ChevronLeft size={20} />
-        </button>
+/* ─── Main component ─────────────────────────────────────────────── */
+export default function PageFlipContainer({ pages, accentColor, currentIndex, onIndexChange }: Props) {
+  const [flip, setFlip] = useState<Flip | null>(null);
+  const [isEditingText, setIsEditingText] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isFlipping = flip !== null;
+  const lastFlippedIdxRef = useRef(currentIndex);
+  const updateJournalText = usePagesStore((s) => s.updateJournalText);
+  const deletePage = usePagesStore((s) => s.deletePage);
+
+  // Auto-enter edit mode for empty pages, exit edit mode when switching pages
+  useEffect(() => {
+    const page = pages[currentIndex];
+    if (!page) return;
+    const isEmpty = !page.journalText?.trim() && page.stamps.length === 0;
+    setIsEditMode(isEmpty);
+  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const triggerFlip = useCallback(
+    (next: number, dir: 1 | -1) => {
+      if (isFlipping) return;
+      if (next < 0 || next >= pages.length) return;
+      playPageFlip();
+      lastFlippedIdxRef.current = next;
+      setFlip({ dir, fromIdx: currentIndex, toIdx: next });
+      onIndexChange(next);
+    },
+    [isFlipping, currentIndex, pages.length, onIndexChange],
+  );
+
+  // Detect external currentIndex changes (e.g. "New Page") and animate the flip
+  useEffect(() => {
+    if (lastFlippedIdxRef.current !== currentIndex && !isFlipping) {
+      const from = lastFlippedIdxRef.current;
+      const to = currentIndex;
+      lastFlippedIdxRef.current = to;
+      if (from >= 0 && from < pages.length && to >= 0 && to < pages.length) {
+        playPageFlip();
+        setFlip({ dir: to > from ? 1 : -1, fromIdx: from, toIdx: to });
+      }
+    }
+  }, [currentIndex, isFlipping, pages.length]);
+
+  const goForward = useCallback(() => triggerFlip(currentIndex + 1, 1), [currentIndex, triggerFlip]);
+  const goBack    = useCallback(() => triggerFlip(currentIndex - 1, -1), [currentIndex, triggerFlip]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isEditingText) return;
+      if (e.key === 'ArrowRight') goForward();
+      else if (e.key === 'ArrowLeft') goBack();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [goForward, goBack, isEditingText]);
+
+  if (!pages[currentIndex]) return null;
+
+  /*
+   * What to render in each layer:
+   *
+   * Normal (no flip):
+   *   leftStatic  = text(currentIndex)
+   *   rightStatic = stamp(currentIndex)
+   *
+   * Forward flip (N → N+1):
+   *   leftStatic  = text(N)           [stays, doesn't move]
+   *   rightStatic = stamp(N+1)        [visible behind turn page]
+   *   turnPage    = right half, rotateY 0 → -180, origin 0% 50%
+   *     front     = stamp(N)
+   *     back      = text(N+1)         [lands on left after flip]
+   *
+   * Backward flip (N → N-1):
+   *   leftStatic  = text(N-1)         [visible behind turn page]
+   *   rightStatic = stamp(N)          [stays, doesn't move]
+   *   turnPage    = left half, rotateY 0 → +180, origin 100% 50%
+   *     front     = text(N)
+   *     back      = stamp(N-1)        [lands on right after flip]
+   */
+  const fromPage = flip ? pages[flip.fromIdx] : pages[currentIndex];
+  const toPage   = flip ? pages[flip.toIdx]   : null;
+
+  const leftStaticPage  = flip?.dir === -1 ? toPage!   : fromPage;
+  const rightStaticPage = flip?.dir ===  1 ? toPage!   : fromPage;
+  const leftStaticIdx   = flip?.dir === -1 ? flip.toIdx   : (flip?.fromIdx ?? currentIndex);
+  const rightStaticIdx  = flip?.dir ===  1 ? flip.toIdx   : (flip?.fromIdx ?? currentIndex);
+
+  return (
+    <div className={styles.container}>
+
+      <div className={styles.scene}>
+        <div className={styles.bookShell}>
+
+          {/* ── Page action icons — above teal shape, top-right ── */}
+          <div className={styles.pageActions}>
+            {isEditMode && (
+              <button
+                className={styles.saveBtn}
+                onClick={() => setIsEditMode(false)}
+                aria-label="Save changes"
+              >
+                <Check size={14} />
+                <span>Save Changes</span>
+              </button>
+            )}
+            {([
+              { icon: <Share2 size={16} />, label: 'Share this page' },
+              { icon: <Pencil size={16} />, label: 'Edit this page', onClick: () => setIsEditMode(true), active: isEditMode },
+              { icon: <Trash2 size={16} />, label: 'Delete this page', danger: true, onClick: () => setShowDeleteConfirm(true) },
+            ] as { icon: React.ReactNode; label: string; danger?: boolean; onClick?: () => void; active?: boolean }[]).map(({ icon, label, danger, onClick, active }) => (
+              <div key={label} className={styles.actionWrap}>
+                <button
+                  className={`${styles.actionBtn} ${danger ? styles.actionBtnDanger : ''} ${active ? styles.actionBtnActive : ''}`}
+                  aria-label={label}
+                  onClick={onClick}
+                >
+                  {icon}
+                </button>
+                <span className={styles.tooltip}>{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Book cover (behind pages) ──────────────────────── */}
+          <div className={styles.bookCoverBg}>
+            <div className={styles.coverLeft}>
+              <img src="/static/openbookleftshape.png" className={styles.coverLeftImg} alt="" />
+            </div>
+            <div className={styles.coverRight}>
+              <img src="/static/openbookrightshape.png" className={styles.coverRightImg} alt="" />
+            </div>
+          </div>
+
+          {/* ── Binder clip ───────────────────────────────────── */}
+          <img src="/static/clip.svg" className={styles.binderClip} alt="" />
+
+        <div className={styles.bookFrame}>
+
+          {/* ── Left static page ──────────────────────────────── */}
+          <div className={styles.pageLeft}>
+            <PaperTexture seed={leftStaticIdx * 2} foxing={leftStaticIdx % 4 === 0} />
+            {leftStaticPage && (
+              <LeftFace
+                page={leftStaticPage}
+                idx={leftStaticIdx}
+                editable={isEditMode && !isFlipping}
+                onTextSave={(text) => updateJournalText(leftStaticPage.id, text)}
+                onEditingChange={setIsEditingText}
+              />
+            )}
+          </div>
+
+          {/* ── Right static page (behind turn page) ──────────── */}
+          <div className={styles.pageRight}>
+            <PaperTexture seed={rightStaticIdx * 2 + 1} />
+            {rightStaticPage && (
+              <RightFace page={rightStaticPage} accentColor={accentColor} idx={rightStaticIdx} editable={isEditMode && !isFlipping} />
+            )}
+          </div>
+
+          {/* ── Spine ─────────────────────────────────────────── */}
+          <div className={styles.spine} />
+
+          {/* ── 3D turn page (forward: right half) ────────────── */}
+          <AnimatePresence>
+            {isFlipping && flip.dir === 1 && (
+              <motion.div
+                key="turn-forward"
+                className={styles.turnRight}
+                style={{ transformStyle: 'preserve-3d', transformOrigin: '0% 50%' }}
+                initial={{ rotateY: 0 }}
+                animate={{ rotateY: -180 }}
+                transition={{ duration: 0.7, ease: [0.645, 0.045, 0.355, 1.0] }}
+                onAnimationComplete={() => setFlip(null)}
+              >
+                <div className={`${styles.pageFace} ${styles.pageFront}`}>
+                  <PaperTexture seed={flip.fromIdx * 2 + 1} />
+                  <RightFace page={fromPage} accentColor={accentColor} idx={flip.fromIdx} />
+                  <div className={styles.frontShadow} />
+                </div>
+                <div className={`${styles.pageFace} ${styles.pageBack} ${styles.pageBackRight}`}>
+                  <PaperTexture seed={flip.toIdx * 2} foxing={flip.toIdx % 4 === 0} />
+                  {toPage && <LeftFace page={toPage} idx={flip.toIdx} />}
+                  <div className={styles.backSpineShadow} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── 3D turn page (backward: left half) ────────────── */}
+          <AnimatePresence>
+            {isFlipping && flip.dir === -1 && (
+              <motion.div
+                key="turn-backward"
+                className={styles.turnLeft}
+                style={{ transformStyle: 'preserve-3d', transformOrigin: '100% 50%' }}
+                initial={{ rotateY: 0 }}
+                animate={{ rotateY: 180 }}
+                transition={{ duration: 0.7, ease: [0.645, 0.045, 0.355, 1.0] }}
+                onAnimationComplete={() => setFlip(null)}
+              >
+                <div className={`${styles.pageFace} ${styles.pageFront} ${styles.pageFrontLeft}`}>
+                  <PaperTexture seed={flip.fromIdx * 2} foxing={flip.fromIdx % 4 === 0} />
+                  <LeftFace page={fromPage} idx={flip.fromIdx} />
+                  <div className={styles.frontShadowLeft} />
+                </div>
+                <div className={`${styles.pageFace} ${styles.pageBack} ${styles.pageBackLeft}`}>
+                  <PaperTexture seed={flip.toIdx * 2 + 1} />
+                  {toPage && <RightFace page={toPage} accentColor={accentColor} idx={flip.toIdx} />}
+                  <div className={styles.backSpineShadowRight} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Cast shadows ──────────────────────────────────── */}
+          {isFlipping && (
+            <div
+              className={
+                flip.dir === 1 ? styles.castShadowRight : styles.castShadowLeft
+              }
+            />
+          )}
+
+          {/* ── Navigation zones ──────────────────────────────── */}
+          {currentIndex > 0 && (
+            <button className={`${styles.navZone} ${styles.navPrev}`} onClick={goBack} aria-label="Previous page">
+              <span className={styles.navArrow}><ChevronLeft size={18} /></span>
+            </button>
+          )}
+          {currentIndex < pages.length - 1 && (
+            <button className={`${styles.navZone} ${styles.navNext}`} onClick={goForward} aria-label="Next page">
+              <span className={styles.navArrow}><ChevronRight size={18} /></span>
+            </button>
+          )}
+
+          {/* ── Page indicator ────────────────────────────────── */}
+          <div className={styles.pageIndicator}>
+            <button
+              className={styles.pageIndicatorBtn}
+              onClick={() => triggerFlip(0, -1)}
+              disabled={currentIndex === 0}
+              aria-label="Go to first page"
+            >
+              1
+            </button>
+            <div className={styles.progressBar}>
+              <div
+                className={styles.progressFill}
+                style={{ width: `${((currentIndex + 1) / pages.length) * 100}%` }}
+              />
+            </div>
+            <button
+              className={styles.pageIndicatorBtn}
+              onClick={() => triggerFlip(pages.length - 1, 1)}
+              disabled={currentIndex === pages.length - 1}
+              aria-label="Go to last page"
+            >
+              {pages.length}
+            </button>
+          </div>
+        </div>{/* bookFrame */}
+        </div>{/* bookShell */}
+
+      {/* ── Delete confirmation dialog ─────────────────────────── */}
+      {showDeleteConfirm && createPortal(
+        <div className={styles.confirmOverlay} onClick={() => setShowDeleteConfirm(false)}>
+          <div className={styles.confirmDialog} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.confirmText}>Are you sure you want to delete this whole page?</p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.confirmCancel}
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.confirmDelete}
+                onClick={() => {
+                  deletePage(pages[currentIndex].id);
+                  setShowDeleteConfirm(false);
+                  // Navigate to adjacent page
+                  const nextIdx = currentIndex > 0 ? currentIndex - 1 : 0;
+                  onIndexChange(nextIdx);
+                }}
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
-      {currentIndex < pages.length - 1 && (
-        <button className={`${styles.arrow} ${styles.arrowRight}`} onClick={goForward} aria-label="Next page">
-          <ChevronRight size={20} />
-        </button>
-      )}
+      </div>
     </div>
   );
 }

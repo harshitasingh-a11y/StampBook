@@ -1,38 +1,41 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Book } from '@/types/book';
+import { saveBook as fbSaveBook, deleteBook as fbDeleteBook } from '@/lib/firestoreService';
 
 interface BooksState {
+  uid: string | null;
   books: Book[];
+  setUid: (uid: string | null) => void;
   addBook: (title: string, colorTheme: string) => void;
   removeBook: (id: string) => void;
   getBookById: (id: string) => Book | undefined;
 }
 
-export const useBooksStore = create<BooksState>()(
-  persist(
-    (set, get) => ({
-      books: [],
-      addBook: (title, colorTheme) => {
-        const newBook: Book = {
-          id: crypto.randomUUID(),
-          title,
-          coverImage: null,
-          colorTheme,
-          pageCount: 0,
-          createdAt: new Date().toISOString(),
-        };
-        set((state) => ({ books: [...state.books, newBook] }));
-      },
-      removeBook: (id) => {
-        set((state) => ({ books: state.books.filter((b) => b.id !== id) }));
-      },
-      getBookById: (id) => {
-        return get().books.find((b) => b.id === id);
-      },
-    }),
-    {
-      name: 'stampbook-books',
-    }
-  )
-);
+export const useBooksStore = create<BooksState>()((set, get) => ({
+  uid: null,
+  books: [],
+
+  setUid: (uid) => set({ uid }),
+
+  addBook: (title, colorTheme) => {
+    const uid = get().uid;
+    const newBook: Book = {
+      id: crypto.randomUUID(),
+      title,
+      coverImage: null,
+      colorTheme,
+      pageCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    set((state) => ({ books: [...state.books, newBook] }));
+    if (uid) fbSaveBook(uid, newBook);
+  },
+
+  removeBook: (id) => {
+    const uid = get().uid;
+    set((state) => ({ books: state.books.filter((b) => b.id !== id) }));
+    if (uid) fbDeleteBook(uid, id);
+  },
+
+  getBookById: (id) => get().books.find((b) => b.id === id),
+}));

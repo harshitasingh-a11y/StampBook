@@ -11,6 +11,31 @@
 
 .header {
   margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.createBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #4a2c1a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.createBtn:hover {
+  background: #3a2014;
 }
 
 .title {

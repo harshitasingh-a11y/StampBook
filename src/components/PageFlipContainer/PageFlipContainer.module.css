@@ -1,3 +1,92 @@
+/* ── Page action icons ────────────────────────────────────────── */
+.pageActions {
+  position: absolute;
+  top: -36px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 30;
+}
+
+.actionWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: rgba(90, 78, 66, 0.35);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.actionBtn:hover {
+  background: rgba(0, 0, 0, 0.07);
+  color: #2c2c2c;
+}
+
+.actionBtnDanger:hover {
+  background: rgba(180, 50, 40, 0.1);
+  color: #b43228;
+}
+
+.actionBtnActive {
+  color: #3a6b4e;
+  background: rgba(58, 107, 78, 0.1);
+}
+
+.saveBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #3a6b4e;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-body, sans-serif);
+  transition: background 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.saveBtn:hover {
+  background: #2e5640;
+  transform: scale(1.03);
+}
+
+.tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: rgba(30, 24, 18, 0.82);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.actionWrap:hover .tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ── Outer container ──────────────────────────────────────────── */
 .container {
   position: relative;
@@ -5,144 +94,832 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
+  padding: 24px 16px 48px;
   min-height: 0;
-  margin-top: -40px;
 }
 
-/* ── Book frame ───────────────────────────────────────────────── */
+/* ── Scene (provides 3D perspective) ─────────────────────────── */
+.scene {
+  perspective: 2000px;
+  perspective-origin: 50% 50%;
+}
+
+/* ── Book shell — wraps cover + pages ────────────────────────── */
 /*
-  The open book from Figma (582 × 446 px).
-  All child layers are absolutely positioned using percentages
-  derived from the Figma coordinates.
+  Shell has explicit dimensions = pages + cover bleed on all four sides,
+  so box-shadow follows the full cover outline.
 */
-.bookFrame {
+.bookShell {
   position: relative;
-  /* Lock height to 50% of viewport, derive width from Figma aspect ratio */
-  height: 80vh;
-  height: 80dvh;
-  width: calc(80dvh * (582 / 446));
-  max-width: calc(100vw - 16px);
-  aspect-ratio: 582 / 446;
+  --bh: min(78dvh, 540px);
+  --cx: 56px;   /* horizontal bleed per side */
+  --cy: 34px;   /* vertical bleed per side   */
+  width:  calc(var(--bh) * 1.44 + var(--cx) * 2);
+  height: calc(var(--bh) + var(--cy) * 2);
 }
 
-/* ── Page surface textures (layer 1) ──────────────────────────── */
-/*
-  The Intersect images add subtle paper shading. mix-blend-mode:multiply
-  darkens the warm page background rather than painting over it.
-  Figma coordinates:
-    book body group: left=4, top=59 (within 582×446)
-    left page texture:  w=287, h=381 → left=4px, top=59px
-    right page textures: w=287, h=381 → left=291px, top=59px
-*/
-.tex {
-  position: absolute;
-  mix-blend-mode: multiply;
-  object-fit: cover;
-  pointer-events: none;
-}
-
-.texLeft {
-  left: 0.7%;   /* 4/582  */
-  top: 13.2%;   /* 59/446 */
-  width: 49.3%; /* 287/582 */
-  height: 85.4%;/* 381/446 */
-}
-
-.texRightBack {
-  left: 50%;    /* 291/582 */
-  top: 13.2%;
-  width: 49.3%;
-  height: 85.4%;
-  transform: rotate(180deg);
-}
-
-.texRight {
-  left: 50%;
-  top: 13.2%;
-  width: 49.3%;
-  height: 85.4%;
-}
-
-/* ── Page content area (layer 2) ─────────────────────────────── */
-.pageArea {
-  position: absolute;
-  left: 2.5%;
-  top: 15.5%;
-  width: 95%;
-  height: 82%;
-  overflow: hidden;
-  z-index: 2;
-}
-
-.page {
+/* ── Cover background — fills the entire shell ────────────────── */
+.bookCoverBg {
   position: absolute;
   inset: 0;
   display: flex;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* ── Kraft border / book image (layer 3) ──────────────────────── */
-/*
-  The open-book PNG has transparent pages — only the kraft frame is
-  opaque. It sits above the page content to clip/frame it naturally.
-  Figma: left=0, top=59, w=582, h=388
-*/
-.bookImg {
+.coverLeft {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.coverLeftImg {
   position: absolute;
-  left: 0;
-  top: 13.2%;   /* 59/446 */
+  inset: 0;
   width: 100%;
-  height: 87%;  /* 388/446 */
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 3;
+  height: 100%;
+  object-fit: fill;
 }
 
-/* ── Binder clip (layer 4) ────────────────────────────────────── */
+.coverRight {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.coverRightImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+/* ── Binder clip — overlaps top edge of cover ─────────────────── */
+.binderClip {
+  position: absolute;
+  top: -53px;
+  left: 40%;
+  transform: translateX(-50%);
+  width: 79px;
+  height: 62px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* ── Book frame — pages sit inset inside the cover ────────────── */
+.bookFrame {
+  position: absolute;
+  left: var(--cx);
+  top: var(--cy);
+  height: var(--bh);
+  width: calc(var(--bh) * 1.44);
+  display: flex;
+  z-index: 1;
+}
+
+/* ── Static page halves ───────────────────────────────────────── */
+.pageLeft,
+.pageRight {
+  position: relative;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pageLeft {
+  background: linear-gradient(170deg, #f7f2ea 0%, #efe9de 30%, #f3edd4 60%, #ece5d6 100%);
+  border-radius: 3px 0 0 3px;
+  box-shadow: inset -12px 0 20px -8px rgba(0, 0, 0, 0.10);
+}
+
+.pageRight {
+  background: linear-gradient(190deg, #f5f0e6 0%, #ede7db 35%, #f1ebd5 65%, #eae3d4 100%);
+  border-radius: 0 3px 3px 0;
+  box-shadow: inset 12px 0 20px -8px rgba(0, 0, 0, 0.10);
+}
+
+/* ── Spine ─────────────────────────────────────────────────────── */
+.spine {
+  position: absolute;
+  left: calc(50% - 2px);
+  top: -2px;
+  width: 4px;
+  height: calc(100% + 4px);
+  background: linear-gradient(to right, #c4b8a4, #d9ccb8 40%, #c4b8a4);
+  z-index: 15;
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Turn page containers ─────────────────────────────────────── */
 /*
-  Figma: left=176, top=0, w=81, h≈66.
-  The asset overflows slightly (negative insets in Figma) so we
-  extend width/height slightly and shift left accordingly.
+  .turnRight  — forward flip: starts on right half, rotates left (-180°)
+  .turnLeft   — backward flip: starts on left half, rotates right (+180°)
+  Both positioned absolutely, using preserve-3d (set inline to prevent
+  framer-motion from stripping it).
 */
-.clip {
+.turnRight,
+.turnLeft {
   position: absolute;
-  left: 29%;    /* ~(176-6)/582 accounting for overflow */
-  top: calc(-1% + 15px);
-  width: 16.5%;
-  height: 16%;
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 4;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  z-index: 10;
 }
 
-/* ── Arrow navigation ─────────────────────────────────────────── */
-.arrow {
+.turnRight {
+  left: 50%;
+}
+
+.turnLeft {
+  left: 0;
+}
+
+/* ── Page faces ───────────────────────────────────────────────── */
+.pageFace {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+}
+
+
+.pageFront {
+  background: linear-gradient(190deg, #f5f0e6 0%, #ede7db 35%, #f1ebd5 65%, #eae3d4 100%);
+  border-radius: 0 3px 3px 0;
+  box-shadow: inset 12px 0 20px -8px rgba(0, 0, 0, 0.10);
+  z-index: 2;
+}
+
+.pageFrontLeft {
+  background: linear-gradient(170deg, #f7f2ea 0%, #efe9de 30%, #f3edd4 60%, #ece5d6 100%);
+  border-radius: 3px 0 0 3px;
+  box-shadow: inset -12px 0 20px -8px rgba(0, 0, 0, 0.10);
+}
+
+/* Back face: pre-rotated 180° so it faces camera after parent flips */
+.pageBack {
+  transform: rotateY(180deg);
+  background: linear-gradient(170deg, #f3ede3 0%, #ebe5d9 30%, #efe8d2 60%, #e8e1d2 100%);
+  z-index: 1;
+}
+
+/* Back of a forward flip — appears on left side after flip */
+.pageBackRight {
+  border-radius: 3px 0 0 3px;
+  box-shadow: inset -12px 0 20px -8px rgba(0, 0, 0, 0.08);
+}
+
+/* Back of a backward flip — appears on right side after flip */
+.pageBackLeft {
+  border-radius: 0 3px 3px 0;
+  box-shadow: inset 12px 0 20px -8px rgba(0, 0, 0, 0.08);
+}
+
+/* Gradient shadow that darkens front face during lift (curl illusion) */
+.frontShadow {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.13) 100%);
+  pointer-events: none;
+}
+
+.frontShadowLeft {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.13) 100%);
+  pointer-events: none;
+}
+
+/* Spine shadow on back face */
+.backSpineShadow {
+  position: absolute;
+  right: 0; top: 0;
+  width: 40px; height: 100%;
+  z-index: 4;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.06), transparent);
+  pointer-events: none;
+}
+
+.backSpineShadowRight {
+  position: absolute;
+  left: 0; top: 0;
+  width: 40px; height: 100%;
+  z-index: 4;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.06), transparent);
+  pointer-events: none;
+}
+
+/* ── Cast shadows onto opposing page during turn ──────────────── */
+.castShadowRight {
+  position: absolute;
+  left: 50%; top: 0;
+  width: 50%; height: 100%;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.18) 0%, transparent 65%);
+  z-index: 5;
+  pointer-events: none;
+  border-radius: 0 3px 3px 0;
+}
+
+.castShadowLeft {
+  position: absolute;
+  left: 0; top: 0;
+  width: 50%; height: 100%;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.15) 0%, transparent 65%);
+  z-index: 5;
+  pointer-events: none;
+  border-radius: 3px 0 0 3px;
+}
+
+/* ── Face layout: left (text) ─────────────────────────────────── */
+/*
+  position:relative + z-index:3 lifts content above the ::before / ::after
+  paper-texture pseudo-elements (z-index 1 and 2).
+*/
+.faceLeft {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8% 7% 6% 8%;
+}
+
+/* ── Face layout: right (stamp) ───────────────────────────────── */
+.faceRight {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8% 8% 6% 7%;
+}
+
+/* Shared inner wrapper */
+.faceInner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6%;
+  overflow: hidden;
+}
+
+
+/* ── Journal text (left face) ─────────────────────────────────── */
+.faceDate {
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  font-size: clamp(8px, 1.1dvh, 12px);
+  letter-spacing: 0.12em;
+  color: #9a8b78;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  align-self: flex-start;
+}
+
+.faceBody {
+  width: 100%;
+  overflow: hidden;
+}
+
+.faceBodyEditable {
+  cursor: text;
+  border-radius: 3px;
+  transition: background 0.15s ease;
+}
+
+.faceBodyEditable:hover {
+  background: rgba(74, 63, 53, 0.04);
+}
+
+.facePlaceholder {
+  font-family: 'Lora', 'Georgia', serif;
+  font-size: clamp(8px, 1.25dvh, 13px);
+  line-height: 1.85;
+  color: #c0ae98;
+  font-style: italic;
+  user-select: none;
+}
+
+.faceTextarea {
+  width: 100%;
+  min-height: 60px;
+  max-height: 55%;
+  overflow-y: auto;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Lora', 'Georgia', serif;
+  font-size: clamp(8px, 1.25dvh, 13px);
+  line-height: 1.85;
+  color: #4a3f35;
+  caret-color: #4a3f35;
+  position: relative;
+  z-index: 25;
+  padding: 2px 0;
+  text-align: justify;
+}
+
+.faceTextarea::placeholder {
+  color: #c0ae98;
+  font-style: italic;
+}
+
+.facePara {
+  font-family: 'Lora', 'Georgia', serif;
+  font-size: clamp(8px, 1.25dvh, 13px);
+  line-height: 1.85;
+  color: #4a3f35;
+  text-align: justify;
+  hyphens: auto;
+  margin-bottom: 0.7em;
+}
+
+/* Drop cap on first paragraph */
+.dropcap::first-letter {
+  float: left;
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  font-size: clamp(28px, 5dvh, 52px);
+  line-height: 0.8;
+  padding-right: 5px;
+  padding-top: 3px;
+  color: #3a2f25;
+  font-weight: 600;
+}
+
+/* ── Postage stamp (right face) — Paper MCP design ───────────── */
+
+/* drop-shadow on wrapper follows the perforated mask shape */
+.stampWrap {
+  width: 89.8%;
+  max-width: 211px;
+}
+
+/*
+  Real perforations: 4 radial-gradient layers, each punching transparent
+  half-circles along one edge. mask-composite:intersect means any edge hole
+  shows through. Background #D4C9B0 = exact Paper stamp body colour.
+*/
+.stamp {
+  width: 100%;
+  background-color: #D4C9B0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  mask:
+    radial-gradient(circle at 50% 0,    transparent 5px, #000 5px) 0 0 / 16px 100% repeat-x,
+    radial-gradient(circle at 50% 100%, transparent 5px, #000 5px) 0 0 / 16px 100% repeat-x,
+    radial-gradient(circle at 0 50%,    transparent 5px, #000 5px) 0 0 / 100% 16px repeat-y,
+    radial-gradient(circle at 100% 50%, transparent 5px, #000 5px) 0 0 / 100% 16px repeat-y;
+  -webkit-mask:
+    radial-gradient(circle at 50% 0,    transparent 5px, #000 5px) 0 0 / 16px 100% repeat-x,
+    radial-gradient(circle at 50% 100%, transparent 5px, #000 5px) 0 0 / 16px 100% repeat-x,
+    radial-gradient(circle at 0 50%,    transparent 5px, #000 5px) 0 0 / 100% 16px repeat-y,
+    radial-gradient(circle at 100% 50%, transparent 5px, #000 5px) 0 0 / 100% 16px repeat-y;
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+
+/* 443:330 aspect-ratio + 6.3% radius from Paper HX-0/HY-0 (443×330px, 28px radius) */
+.stampImg {
+  width: 100%;
+  aspect-ratio: 443 / 330;
+  background: #bfb9a8;
+  border-radius: 6.3%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.stampImgBlank {
+  width: 100%;
+  height: 100%;
+  background: #bfb9a8;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #5a4a3a;
+}
+
+.stampAddIcon {
+  color: rgba(80, 70, 55, 0.28);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.uploadSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(80, 70, 55, 0.18);
+  border-top-color: rgba(80, 70, 55, 0.55);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.stampPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.stampVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Wrapper for image area + dropdown */
+.stampImgWrap {
+  position: relative;
+  width: 100%;
+}
+
+.stampImgClickable {
+  cursor: pointer;
+}
+
+/* Edit / delete overlay on hover */
+.mediaOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(30, 22, 12, 0.32);
+  border-radius: inherit;
+}
+
+.mediaOverlayBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(237, 232, 220, 0.88);
+  border: none;
+  color: #3a2e22;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+}
+
+.mediaOverlayBtn:hover {
+  background: #ede8de;
+  transform: scale(1.1);
+}
+
+.mediaOverlayBtnDelete:hover {
+  background: #f5e0dc;
+  color: #b43228;
+}
+
+/* Upload dropdown */
+.mediaDropdown {
+  /* position: fixed + top/left set inline via JS */
+  background: #ede8de;
+  border: 1px solid rgba(139, 120, 90, 0.18);
+  border-radius: 11px;
+  box-shadow: 0 8px 24px rgba(90, 72, 40, 0.14), 0 1px 4px rgba(90, 72, 40, 0.08);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 9999;
+  min-width: 158px;
+  white-space: nowrap;
+}
+
+.mediaOption {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border-radius: 7px;
+  font-family: var(--font-body, sans-serif);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #4a3b28;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+}
+
+.mediaOption:hover {
+  background: rgba(139, 110, 65, 0.1);
+}
+
+.mediaError {
+  font-size: 10px;
+  color: #b43228;
+  padding: 4px 10px 6px;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* ── Delete confirmation dialog ───────────────────────────────── */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 14, 8, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.confirmDialog {
+  background: #f2ede4;
+  border-radius: 10px;
+  padding: 24px 28px 20px;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(40, 26, 12, 0.22);
+  font-family: 'Georgia', serif;
+}
+
+.confirmText {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #3a2e22;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirmCancel {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #c4b89a;
+  background: transparent;
+  color: #6b5740;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.confirmCancel:hover {
+  background: #e8e0d0;
+}
+
+.confirmDelete {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: none;
+  background: #9e3028;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.confirmDelete:hover {
+  background: #7d2420;
+}
+
+.stampMeta {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 1px;
+}
+
+.stampTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Paper HT-0: bold halftone title */
+.stampTitle {
+  font-family: 'MicrogrammaD', Impact, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.2px;
+  color: #2B2B2B;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+/* Paper HU-0: year */
+.stampYear {
+  font-family: 'MicrogrammaD', Impact, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #2B2B2B;
+  line-height: 1.1;
+}
+
+/* Editable stamp fields */
+.stampTitle[contenteditable],
+.stampYear[contenteditable] {
+  outline: none;
+  cursor: text;
+  min-width: 4px;
+  display: inline-block;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+
+.stampTitle[contenteditable]:hover,
+.stampYear[contenteditable]:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.stampTitle[contenteditable]:focus,
+.stampYear[contenteditable]:focus {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.stampTitle[contenteditable]:empty::before,
+.stampYear[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: #9a8e7e;
+  font-style: italic;
+  font-weight: normal;
+  text-transform: none;
+  pointer-events: none;
+}
+
+/* Paper I0-0 + I1-0: #ACB8BB grey + #EBD790 gold with multiply */
+.stampDots {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dot1 {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #ACB8BB;
+  margin-right: -4px;
+}
+
+.dot2 {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #EBD790;
+  mix-blend-mode: multiply;
+}
+
+/* ── Postmark ─────────────────────────────────────────────────── */
+.postmark {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.postmarkRing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 10px;
+  border: 1.5px dashed currentColor;
+  border-radius: 999px;
+  transform: rotate(-12deg);
+  min-width: 60px;
+}
+
+.postmarkDate {
+  font-family: var(--font-handwriting, 'Georgia', serif);
+  font-size: clamp(7px, 1dvh, 10px);
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+.postmarkLoc {
+  font-family: var(--font-handwriting, 'Georgia', serif);
+  font-size: clamp(6px, 0.85dvh, 8px);
+  white-space: nowrap;
+}
+
+/* ── Page number ──────────────────────────────────────────────── */
+.pageNum {
+  text-align: center;
+  font-size: clamp(8px, 1dvh, 11px);
+  color: #9a8b78;
+  letter-spacing: 0.15em;
+  padding-top: 6px;
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  font-variant-numeric: oldstyle-nums;
+}
+
+/* ── Navigation zones ─────────────────────────────────────────── */
+.navZone {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: transparent;
+}
+
+.navZone:hover { opacity: 1; }
+
+.navPrev {
+  left: -56px;
+}
+
+.navNext {
+  right: -56px;
+}
+
+.navArrow {
+  width: 34px; height: 34px;
+  background: rgba(58, 47, 37, 0.12);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  color: #3a2f25;
+  transition: background 0.2s ease;
+}
+
+.navZone:hover .navArrow {
+  background: rgba(58, 47, 37, 0.22);
+}
+
+/* ── Page indicator bar ───────────────────────────────────────── */
+.pageIndicator {
+  position: absolute;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(90, 74, 58, 0.55);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  white-space: nowrap;
+}
+
+.pageIndicatorBtn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pageIndicatorBtn:hover:not(:disabled) {
+  background: rgba(90, 74, 58, 0.1);
+  color: rgba(90, 74, 58, 0.9);
+}
+
+.pageIndicatorBtn:disabled {
+  cursor: default;
   opacity: 0.5;
-  transition: opacity 0.2s ease;
-  z-index: 5;
 }
 
-.arrow:hover {
-  opacity: 0.85;
+.progressBar {
+  width: 100px;
+  height: 2px;
+  background: rgba(90, 74, 58, 0.15);
+  border-radius: 1px;
+  overflow: hidden;
 }
 
-.arrowLeft {
-  left: 0;
-}
-
-.arrowRight {
-  right: 0;
+.progressFill {
+  height: 100%;
+  background: rgba(90, 74, 58, 0.4);
+  transition: width 0.7s ease;
+  border-radius: 1px;
 }

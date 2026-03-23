@@ -1,49 +1,180 @@
+/*
+  Clipboard-style book cover.
+  Reference Figma dimensions: 239.313 × 363.554px total (clip + board).
+  Board alone: 239.313 × 317.694px, top-offset 45.86px (12.61% of total).
+  All positions are percentages of these reference values.
+*/
+
 .wrapper {
   transform: rotate(var(--rotation, 0deg));
   transform-origin: center center;
 }
 
+/* Outer card link — sized to full clipboard (clip + board) */
 .card {
-  display: flex;
-  flex-direction: column;
-  aspect-ratio: 3 / 4;
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  transition: box-shadow 0.2s ease;
-  background: #fff;
+  display: block;
+  position: relative;
+  /* aspect-ratio matches 239.313 : 363.554 */
+  aspect-ratio: 239 / 364;
+  text-decoration: none;
+  overflow: visible;
 }
 
-.card:hover {
+/* ── Clip ─────────────────────────────────────────────── */
+
+/* left: 23.35/239.313 = 9.76% | width: 67.541/239.313 = 28.22% | height: 54.728/363.554 = 15.05% */
+.clipArea {
+  position: absolute;
+  top: 0;
+  left: 9.76%;
+  width: 28.22%;
+  height: 15.05%;
+  z-index: 3;
+}
+
+.clipImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ── Board ────────────────────────────────────────────── */
+
+/* top: 45.86/363.554 = 12.61% */
+.board {
+  position: absolute;
+  top: 12.61%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background-color: var(--book-color, #5e6b7a);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover .board {
   box-shadow: var(--shadow-card-hover);
 }
 
-.cover {
-  flex: 1;
-  background-size: cover;
-  background-position: center;
-  position: relative;
+/* ── Texture (cardboard grain) ────────────────────────── */
+
+.texture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: soft-light;
+  opacity: 0.55;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.info {
-  padding: 10px 12px;
-  background: #fff;
+/* ── Board shadow / depth shape ──────────────────────── */
+
+.boardShape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  mix-blend-mode: multiply;
+  z-index: 3;
+  pointer-events: none;
 }
 
-.title {
-  font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 600;
-  color: #2c2c2c;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* ── Memories sticker ─────────────────────────────────── */
+
+/* left: 132.58/239.313 = 55.4% | top: 26.68/317.694 = 8.4% | size: 60/239.313 = 25.07% wide */
+.memoriesSticker {
+  position: absolute;
+  left: 55.4%;
+  top: 8.4%;
+  width: 25.07%;
+  height: 18.89%;
+  z-index: 4;
 }
 
-.pageCount {
-  font-size: 11px;
-  color: #999;
-  margin-top: 2px;
+.memoriesSticker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   display: block;
+}
+
+/* ── Postage stamp ────────────────────────────────────── */
+
+/* left: 156.76/239.313 = 65.5% | top: 76.71/317.694 = 24.15% | w: 54.314/239.313 = 22.7% | h: 45.17/317.694 = 14.22% */
+.stamp {
+  position: absolute;
+  left: 65.5%;
+  top: 24.15%;
+  width: 22.7%;
+  height: 14.22%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+}
+
+.stampInner {
+  transform: rotate(9.03deg);
+  width: 90%;
+  height: 84%;
+  overflow: hidden;
+}
+
+.stampInner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Title label box ──────────────────────────────────── */
+
+/* left: 20.85/239.313 = 8.71% | top: 223.47/317.694 = 70.34% | w: 140.919/239.313 = 58.88% | h: 71.711/317.694 = 22.57% */
+.titleLabel {
+  position: absolute;
+  left: 8.71%;
+  top: 70.34%;
+  width: 58.88%;
+  /* height fits content — grows for 2-line titles, shrinks for 1-line */
+  height: auto;
+  background: #ece6da;
+  border: 0.834px solid rgba(7, 6, 2, 0.8);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  opacity: 0.9;
+  z-index: 5;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.labelTitle {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(8px, 1.3vw, 12px);
+  color: #0a0b06;
+  line-height: 1.15;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.labelPages {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: clamp(7px, 1.1vw, 10px);
+  color: #4a301c;
+  opacity: 0.75;
+  white-space: nowrap;
 }

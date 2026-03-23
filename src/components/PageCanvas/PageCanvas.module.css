@@ -11,6 +11,28 @@
 .leftPage {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12% 8% 8%;
+  overflow: hidden;
+}
+
+/* ── Journal text on left page ────────────────────────────────── */
+.journalText {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+}
+
+.journalPara {
+  font-family: var(--font-handwriting, 'Georgia', serif);
+  font-size: clamp(7px, 1.4dvh, 11px);
+  line-height: 1.65;
+  color: #3a2e22;
+  opacity: 0.82;
+  margin: 0;
 }
 
 .spine {
@@ -29,43 +51,53 @@
 }
 
 /* ── Postage Stamp ────────────────────────────────────────────── */
+
+/*
+  drop-shadow on the wrapper follows the masked shape of .stamp,
+  so the shadow hugs the perforated edge rather than the bounding box.
+*/
 .stampWrap {
   width: 75%;
-  max-width: 148px;
+  max-width: 160px;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,0.18)) drop-shadow(0 1px 3px rgba(0,0,0,0.10));
 }
 
 /*
-  Perforated stamp border via background-image:
-  Circles painted in the approximate page surface colour (#e9e5d8)
-  overlay the cream stamp body (#f9f7f2), creating the illusion of holes.
-  Background layers stack first-on-top, last layer is the solid fill.
+  Real perforations via CSS mask intersection.
+  Each gradient layer is black everywhere except transparent half-circles
+  along one edge. Intersecting all four means a hole in ANY edge shows through.
+  Background: #D4C9B0 matches Paper MCP stamp body colour exactly.
 */
 .stamp {
   width: 100%;
-  border-radius: 3px;
-  background-color: #f9f7f2;
-  background-image:
-    /* Top perforations */
-    radial-gradient(circle, #e4dfd0 54%, transparent 55%) 0 -5.5px / 13px 11px repeat-x,
-    /* Bottom perforations */
-    radial-gradient(circle, #e4dfd0 54%, transparent 55%) 0 calc(100% + 5.5px) / 13px 11px repeat-x,
-    /* Left perforations */
-    radial-gradient(circle, #e4dfd0 54%, transparent 55%) -5.5px 0 / 11px 13px repeat-y,
-    /* Right perforations */
-    radial-gradient(circle, #e4dfd0 54%, transparent 55%) calc(100% + 5.5px) 0 / 11px 13px repeat-y;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.13), 0 1px 3px rgba(0,0,0,0.08);
-  padding: 9px 9px 9px 9px;
+  background-color: #D4C9B0;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 7px;
+  mask:
+    radial-gradient(circle at 50% 0,    transparent 5px, #000 5px) 0 0 / 11px 100% repeat-x,
+    radial-gradient(circle at 50% 100%, transparent 5px, #000 5px) 0 0 / 11px 100% repeat-x,
+    radial-gradient(circle at 0 50%,    transparent 5px, #000 5px) 0 0 / 100% 11px repeat-y,
+    radial-gradient(circle at 100% 50%, transparent 5px, #000 5px) 0 0 / 100% 11px repeat-y;
+  -webkit-mask:
+    radial-gradient(circle at 50% 0,    transparent 5px, #000 5px) 0 0 / 11px 100% repeat-x,
+    radial-gradient(circle at 50% 100%, transparent 5px, #000 5px) 0 0 / 11px 100% repeat-x,
+    radial-gradient(circle at 0 50%,    transparent 5px, #000 5px) 0 0 / 100% 11px repeat-y,
+    radial-gradient(circle at 100% 50%, transparent 5px, #000 5px) 0 0 / 100% 11px repeat-y;
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
 }
 
-/* Image area — sage-green (#CAC8B3 from Paper design), fills top portion */
+/*
+  Image area — aspect-ratio 443:330 from Paper (HX-0/HY-0).
+  border-radius: 28/443 ≈ 6.3% matches Paper's 28px inner radius.
+*/
 .stampImageArea {
   width: 100%;
-  aspect-ratio: 1.1 / 1;
-  background: #CAC8B3;
-  border-radius: 5px;
+  aspect-ratio: 443 / 330;
+  background: #bfb9a8;
+  border-radius: 6.3%;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -77,7 +109,7 @@
   display: block;
 }
 
-/* Info row: text left, dots right */
+/* Info row: text left, dots right — mirrors Paper's HT-0/HU-0/I0-0/I1-0 */
 .stampInfo {
   display: flex;
   align-items: flex-end;
@@ -91,24 +123,57 @@
   gap: 1px;
 }
 
+/* HT-0: bold halftone title — Barlow Condensed 800, uppercase */
 .stampTitle {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Barlow Condensed', Impact, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: #2B2B2B;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+/* HU-0: year text */
+.stampYear {
+  font-family: 'Barlow Condensed', Impact, sans-serif;
   font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.4px;
   color: #2B2B2B;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
-.stampYear {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 7.5px;
-  color: #2B2B2B;
-  opacity: 0.68;
-  line-height: 1.2;
+/* Editable stamp text fields */
+.stampTitle[contenteditable],
+.stampYear[contenteditable] {
+  outline: none;
+  cursor: text;
+  border-radius: 2px;
+  min-width: 4px;
+  display: inline-block;
+  transition: background 0.15s;
 }
 
-/* Publisher dots — matching Paper: blue-grey + gold (mix-blend-multiply) */
+.stampTitle[contenteditable]:hover,
+.stampYear[contenteditable]:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.stampTitle[contenteditable]:focus,
+.stampYear[contenteditable]:focus {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Placeholder via :empty::before — works because spans render with no children */
+.stampTitle[contenteditable]:empty::before,
+.stampYear[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: #9a8e7e;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* I0-0 + I1-0: overlapping circles — #ACB8BB grey + #EBD790 gold/multiply */
 .stampDots {
   display: flex;
   align-items: center;
@@ -162,6 +227,70 @@
   font-family: var(--font-handwriting);
   font-size: 8px;
   white-space: nowrap;
+}
+
+/* ── Page action icons (top-right) ───────────────────────────── */
+.pageActions {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 20;
+}
+
+.actionWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #5a4e42;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.actionBtn:hover {
+  background: rgba(0, 0, 0, 0.07);
+  color: #2c2c2c;
+}
+
+.actionBtnDanger:hover {
+  background: rgba(180, 50, 40, 0.1);
+  color: #b43228;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: rgba(30, 24, 18, 0.82);
+  color: #fff;
+  font-size: 11px;
+  font-family: var(--font-body, sans-serif);
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.actionWrap:hover .tooltip {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ── Floating toolbar ─────────────────────────────────────────── */

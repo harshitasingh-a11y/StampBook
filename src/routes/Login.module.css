@@ -1,0 +1,65 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f0eb;
+  background-image: url('/static/texture.jpg');
+  background-size: cover;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 40px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  max-width: 360px;
+  width: 90%;
+}
+
+.logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.title {
+  font-family: 'MicrogrammaD', sans-serif;
+  font-size: 24px;
+  color: #2c2c2c;
+  letter-spacing: 0.04em;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #7a6f65;
+  margin-bottom: 8px;
+}
+
+.googleBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border: 1.5px solid #d4ccc4;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2c2c2c;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+
+.googleBtn:hover {
+  background: #f5f0eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}

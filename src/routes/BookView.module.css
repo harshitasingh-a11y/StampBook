@@ -3,8 +3,11 @@
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  /* Warm cream from Figma design (node 6838-1424) */
-  background-color: #fbefda;
+  background-color: #EDE7DE;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(200, 180, 160, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(180, 170, 155, 0.1) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 /* Header */
@@ -39,7 +42,7 @@
 
 .title {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: #2c2c2c;
   line-height: 1.3;
@@ -54,6 +57,23 @@
 
 .headerRight {
   width: 36px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  color: #2c2c2c;
+  transition: background 0.15s ease;
+}
+
+.modeBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 /* Empty state */
@@ -70,13 +90,58 @@
   color: #bbb;
 }
 
+/* Edit area */
+.editArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+  overflow: visible;
+}
+
 /* Footer */
 .footer {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
   padding-bottom: max(var(--spacing-md), env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
+}
+
+.editNav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.editNavBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  color: #2c2c2c;
+  transition: background 0.15s ease;
+}
+
+.editNavBtn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.editNavBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.editPageLabel {
+  font-size: 13px;
+  color: #999;
+  min-width: 80px;
+  text-align: center;
 }
 
 .addPageBtn {
@@ -91,8 +156,34 @@
   transition: background 0.15s ease, opacity 0.15s ease;
 }
 
-.addPageBtn:hover {
+.addPageBtn:hover:not(:disabled) {
   opacity: 0.8;
+}
+
+.addPageWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.addPageWrap .addPageTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(30, 24, 18, 0.82);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.addPageWrap:hover .addPageTooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Not found */

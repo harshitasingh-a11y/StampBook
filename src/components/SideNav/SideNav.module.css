@@ -8,46 +8,36 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  /* Match home screen background exactly */
   background: #f5f0eb;
   border-right: 0.8px solid #E4CFBE;
   padding: 36px 16px 24px;
   gap: 32px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* ── Logo ─────────────────────────────────────────────────────── */
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 5px;
   padding: 0 4px;
 }
 
-/* Dark brown box with the stamp image inside — matches Figma */
-.logoIconWrap {
-  width: 22px;
-  height: 21px;
-  background: #4a301c;
-  border: 0.7px solid rgba(208, 171, 139, 0.4);
-  border-radius: 2px;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+/* Logo image — matches the visual height of the StampBook text */
 .logoImg {
-  width: 100%;
-  height: 100%;
+  height: 29.4px;
+  width: 29.4px;
+  flex-shrink: 0;
   object-fit: cover;
-  object-position: center 20%;
+  border-radius: 50%;
 }
 
 /* "StampBook" in serif — matches Libre Baskerville from Figma */
 .logoText {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 400;
   color: #4a301c;
   white-space: nowrap;
@@ -62,6 +52,8 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .item {
@@ -73,6 +65,12 @@
   text-decoration: none;
   transition: background 0.15s ease;
   color: #9a9a9a;
+  /* reset button defaults */
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
 }
 
 .item:hover {
@@ -106,6 +104,86 @@
   color: inherit;
 }
 
+
+/* ── Profile ──────────────────────────────────────────────────── */
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.profile:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #c8a98a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+
+.avatarImg {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.logoutBtn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #bbb;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.logoutBtn:hover {
+  color: #c0392b;
+  background: rgba(192, 57, 43, 0.08);
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.profileName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c2c2c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileSub {
+  font-size: 11px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Hide on mobile */
 @media (max-width: 767px) {

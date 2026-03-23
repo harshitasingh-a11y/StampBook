@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen, PlusCircle, Globe, Inbox } from 'lucide-react';
-import NewBookModal from '@/components/NewBookModal/NewBookModal';
+import { BookOpen, Globe, Inbox, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './SideNav.module.css';
 
 const NAV_LINKS = [
@@ -11,50 +10,53 @@ const NAV_LINKS = [
 ];
 
 export default function SideNav() {
-  const [modalOpen, setModalOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  const displayName = user?.displayName ?? user?.email ?? 'User';
+  const firstName = displayName.split(' ')[0];
+  const initial = displayName[0]?.toUpperCase() ?? '?';
 
   return (
-    <>
-      <nav className={styles.nav}>
-        {/* Logo — from Figma file SfcbEWpss8uhCNulsxEhDN node 8-89 */}
-        <div className={styles.logo}>
-          <div className={styles.logoIconWrap}>
-            <img src="/static/logo-stamp.png" alt="" className={styles.logoImg} />
-          </div>
-          <span className={styles.logoText}>StampBook</span>
-        </div>
+    <nav className={styles.nav}>
+      {/* Logo */}
+      <div className={styles.logo}>
+        <img src="/static/newlogo.png" alt="" className={styles.logoImg} />
+        <span className={styles.logoText}>StampBook</span>
+      </div>
 
-        {/* Nav items */}
-        <ul className={styles.items}>
-          {NAV_LINKS.map(({ to, end, icon: Icon, label }) => (
-            <li key={label}>
-              <NavLink
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `${styles.item} ${isActive ? styles.active : ''}`
-                }
-              >
-                <Icon size={18} strokeWidth={1.7} className={styles.icon} />
-                <span className={styles.label}>{label}</span>
-              </NavLink>
-            </li>
-          ))}
-
-          {/* Create — opens modal, same as TabBar */}
-          <li>
-            <button
-              className={`${styles.item} ${modalOpen ? styles.active : ''}`}
-              onClick={() => setModalOpen(true)}
+      {/* Nav items */}
+      <ul className={styles.items}>
+        {NAV_LINKS.map(({ to, end, icon: Icon, label }) => (
+          <li key={label}>
+            <NavLink
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `${styles.item} ${isActive ? styles.active : ''}`
+              }
             >
-              <PlusCircle size={18} strokeWidth={1.7} className={styles.icon} />
-              <span className={styles.label}>Create</span>
-            </button>
+              <Icon size={18} strokeWidth={1.7} className={styles.icon} />
+              <span className={styles.label}>{label}</span>
+            </NavLink>
           </li>
-        </ul>
-      </nav>
+        ))}
+      </ul>
 
-      <NewBookModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
-    </>
+      {/* Profile */}
+      <div className={styles.profile}>
+        {user?.photoURL ? (
+          <img src={user.photoURL} alt={displayName} className={styles.avatarImg} />
+        ) : (
+          <div className={styles.avatar}>{initial}</div>
+        )}
+        <div className={styles.profileInfo}>
+          <span className={styles.profileName}>{firstName}</span>
+          <span className={styles.profileSub}>{user?.email}</span>
+        </div>
+        <button className={styles.logoutBtn} onClick={logout} title="Sign out">
+          <LogOut size={14} strokeWidth={1.7} />
+        </button>
+      </div>
+    </nav>
   );
 }

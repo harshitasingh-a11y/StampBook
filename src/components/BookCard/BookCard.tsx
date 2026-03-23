@@ -4,6 +4,12 @@ import type { Book } from '@/types/book';
 import { THEME_HEX } from '@/types/book';
 import styles from './BookCard.module.css';
 
+const CLIP_IMG = '/static/clip.svg';
+const TEXTURE_IMG = '/static/texture.jpg';
+const BOARD_SHAPE_IMG = '/static/board-shape.svg';
+const STAMP_IMG = '/static/stamp.png';
+const MEMORIES_IMG = '/static/memories.png';
+
 interface BookCardProps {
   book: Book;
   index: number;
@@ -14,7 +20,7 @@ function hashToRotation(id: string): number {
   for (let i = 0; i < id.length; i++) {
     hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
   }
-  return ((hash % 30) / 10) - 1.5; // range: -1.5 to 1.5
+  return ((hash % 30) / 10) - 1.5;
 }
 
 export default function BookCard({ book, index }: BookCardProps) {
@@ -33,20 +39,41 @@ export default function BookCard({ book, index }: BookCardProps) {
       className={styles.wrapper}
     >
       <Link to={`/book/${book.id}`} className={styles.card}>
+        {/* Metal clip at top */}
+        <div className={styles.clipArea}>
+          <img src={CLIP_IMG} alt="" className={styles.clipImg} />
+        </div>
+
+        {/* Clipboard board */}
         <div
-          className={styles.cover}
-          style={{
-            backgroundColor: bgColor,
-            backgroundImage: book.coverImage
-              ? `url(${book.coverImage})`
-              : undefined,
-          }}
-        />
-        <div className={styles.info}>
-          <h3 className={styles.title}>{book.title}</h3>
-          <span className={styles.pageCount}>
-            {book.pageCount} {book.pageCount === 1 ? 'page' : 'pages'}
-          </span>
+          className={styles.board}
+          style={{ '--book-color': bgColor } as React.CSSProperties}
+        >
+          {/* Cardboard texture overlay */}
+          <img src={TEXTURE_IMG} alt="" className={styles.texture} />
+
+          {/* Board shadow/depth shape */}
+          <img src={BOARD_SHAPE_IMG} alt="" className={styles.boardShape} />
+
+          {/* Memories sticker – top-right of board */}
+          <div className={styles.memoriesSticker}>
+            <img src={MEMORIES_IMG} alt="Memories" />
+          </div>
+
+          {/* Postage stamp – rotated */}
+          <div className={styles.stamp}>
+            <div className={styles.stampInner}>
+              <img src={STAMP_IMG} alt="" />
+            </div>
+          </div>
+
+          {/* Title label box – bottom left */}
+          <div className={styles.titleLabel}>
+            <span className={styles.labelTitle}>{book.title}</span>
+            <span className={styles.labelPages}>
+              {book.pageCount} {book.pageCount === 1 ? 'page' : 'pages'}
+            </span>
+          </div>
         </div>
       </Link>
     </motion.div>

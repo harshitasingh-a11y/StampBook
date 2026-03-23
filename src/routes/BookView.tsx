@@ -1,13 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useBooksStore } from '@/stores/booksStore';
 import { usePagesStore } from '@/stores/pagesStore';
-import { mockBooks } from '@/data/mockBooks';
-import { mockPages } from '@/data/mockPages';
 import { THEME_HEX } from '@/types/book';
 import PageFlipContainer from '@/components/PageFlipContainer/PageFlipContainer';
+import PageCanvas from '@/components/PageCanvas/PageCanvas';
 import styles from './BookView.module.css';
 
 export default function BookView() {
@@ -19,37 +18,21 @@ export default function BookView() {
   const pages = allPages
     .filter((p) => p.bookId === bookId)
     .sort((a, b) => a.position - b.position);
-  const seedPages = usePagesStore((s) => s.seedPages);
   const addPage = usePagesStore((s) => s.addPage);
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [ready, setReady] = useState(false);
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
 
-  // Seed mock books if store is empty (e.g. direct navigation to /book/:id)
-  useEffect(() => {
-    const state = useBooksStore.getState();
-    if (state.books.length === 0) {
-      mockBooks.forEach((b) => {
-        useBooksStore.setState((s) => ({ books: [...s.books, b] }));
-      });
-    }
-    setReady(true);
-  }, []);
 
-  // Seed mock pages on first load
-  useEffect(() => {
-    if (bookId === 'mock-bentota-2026') {
-      seedPages(mockPages);
-    }
-  }, [bookId, seedPages]);
+  const hasEmptyPage = pages.some(
+    (p) => !p.journalText?.trim() && p.stamps.length === 0
+  );
 
   const handleAddPage = useCallback(() => {
-    if (!bookId) return;
+    if (!bookId || hasEmptyPage) return;
     addPage(bookId);
     setCurrentPage(pages.length);
-  }, [bookId, addPage, pages.length]);
-
-  if (!ready) return null;
+  }, [bookId, addPage, pages.length, hasEmptyPage]);
 
   if (!book) {
     return (
@@ -80,39 +63,71 @@ export default function BookView() {
         </button>
         <div className={styles.headerCenter}>
           <h1 className={styles.title}>{book.title}</h1>
-          {pages.length > 0 && (
-            <span className={styles.indicator}>
-              Page {currentPage + 1} / {pages.length}
-            </span>
-          )}
         </div>
         <div className={styles.headerRight} />
       </header>
 
       {/* Page area */}
       {pages.length > 0 ? (
-        <PageFlipContainer
-          pages={pages}
-          accentColor={accentColor}
-          currentIndex={currentPage}
-          onIndexChange={setCurrentPage}
-        />
+        mode === 'view' ? (
+          <PageFlipContainer
+            pages={pages}
+            accentColor={accentColor}
+            currentIndex={currentPage}
+            onIndexChange={setCurrentPage}
+          />
+        ) : (
+          <div className={styles.editArea}>
+            <PageCanvas page={pages[currentPage]} accentColor={accentColor} />
+          </div>
+        )
       ) : (
         <div className={styles.empty}>
           <p className={styles.emptyText}>No pages yet</p>
         </div>
       )}
 
-      {/* Add page button */}
+      {/* Footer */}
       <div className={styles.footer}>
-        <button
-          className={styles.addPageBtn}
-          onClick={handleAddPage}
-          style={{ borderColor: accentColor, color: accentColor }}
-        >
-          <Plus size={16} />
-          <span>New Page</span>
-        </button>
+        {mode === 'edit' && pages.length > 1 && (
+          <div className={styles.editNav}>
+            <button
+              className={styles.editNavBtn}
+              disabled={currentPage <= 0}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span className={styles.editPageLabel}>
+              Page {currentPage + 1} / {pages.length}
+            </span>
+            <button
+              className={styles.editNavBtn}
+              disabled={currentPage >= pages.length - 1}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              aria-label="Next page"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+        <div className={styles.addPageWrap}>
+          <button
+            className={styles.addPageBtn}
+            onClick={handleAddPage}
+            disabled={hasEmptyPage}
+            style={{ borderColor: accentColor, color: accentColor, opacity: hasEmptyPage ? 0.35 : 1 }}
+          >
+            <Plus size={16} />
+            <span>New Page</span>
+          </button>
+          {hasEmptyPage && (
+            <span className={styles.addPageTooltip}>
+              You cannot make a new page with an existing empty page in book
+            </span>
+          )}
+        </div>
       </div>
     </motion.div>
   );

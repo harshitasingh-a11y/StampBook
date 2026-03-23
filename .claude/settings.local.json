@@ -39,7 +39,22 @@
       "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/a09911bf-73de-4154-92c0-bea525f276f1\" -o tex-right-back.png)",
       "Bash(xxd /Users/harshita.singh/Desktop/journal/public/static/clip.png)",
       "mcp__plugin_figma_figma__get_metadata",
-      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/d3b34422-d758-4168-aa87-da0459cdfe58\" -o /Users/harshita.singh/Desktop/journal/public/static/logo-stamp.png)"
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/d3b34422-d758-4168-aa87-da0459cdfe58\" -o /Users/harshita.singh/Desktop/journal/public/static/logo-stamp.png)",
+      "Bash(grep -r \"from ''@/stores/transitionStore''\" src/)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(sips:*)",
+      "mcp__plugin_figma_figma__get_screenshot",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/eef84ec8-8552-4c62-9347-cfd7f5da3c3f\" -o clip.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/4014a07b-c60e-4905-a02d-d454adbe5fce\" -o texture.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/bbd7eb8d-53af-4af0-991f-58ee21160fb1\" -o board-shape.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/7eb0b9c1-fa81-4fd7-a8c6-f57d71108b6a\" -o stamp.png)",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/1a3b8b98-0d70-4553-a6af-bf213301d1b0\" -o memories.png)",
+      "Bash(xxd /Users/harshita.singh/Desktop/journal/public/static/board-shape.png)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
+      "Bash(curl -s -o /Users/harshita.singh/Desktop/journal/public/static/book-cover-left.png \"https://www.figma.com/api/mcp/asset/5632c59f-5fb3-440a-9c29-3d05e9ed7060\")",
+      "Bash(curl -s -o /Users/harshita.singh/Desktop/journal/public/static/book-clip.png \"https://www.figma.com/api/mcp/asset/30f5ef96-d9b5-4346-8899-0e49502855bc\")",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)"
     ]
   }
 }

@@ -1,6 +1,6 @@
 .page {
   flex: 1;
-  padding: var(--spacing-lg) var(--spacing-grid) var(--spacing-lg) calc(72px + var(--spacing-grid));
+  padding: var(--spacing-lg) var(--spacing-grid);
 }
 
 .header {

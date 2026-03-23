@@ -1,19 +1,34 @@
+/* Outer wrapper — same total height as BookCard (clip 12.61% + board 87.39%) */
 .card {
-  aspect-ratio: 3 / 4;
-  border-radius: var(--radius-card);
-  border: 2px dashed rgba(0, 0, 0, 0.15);
+  position: relative;
+  aspect-ratio: 239 / 364;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  /* Push content down past the clip area */
+  padding-top: 12.61%;
   background: transparent;
+  border: none;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.card:hover {
+/* Dashed border aligns with the board area of clipboard cards */
+.card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12.61%;
+  bottom: 0;
+  border-radius: var(--radius-card);
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.card:hover::after {
   border-color: rgba(0, 0, 0, 0.25);
   background-color: rgba(255, 255, 255, 0.4);
 }

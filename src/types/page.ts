@@ -7,6 +7,7 @@ export interface Stamp {
   slotPosition: number;          // 0-based index in grid
   mediaUrl: string | null;       // null = empty
   mediaType: 'photo' | 'video' | null;
+  videoClips?: string[];         // multiple short clips played in a loop
   frameDesignId: FrameDesignId;
   filterId: string | null;
   captionText: string | null;
@@ -22,5 +23,8 @@ export interface Page {
   stamps: Stamp[];
   postmarkDate: string;
   postmarkLocation: string | null;
+  stampTitle?: string;           // editable title shown on the stamp
+  stampSubheading?: string;      // editable subheading shown on the stamp
+  journalText?: string;          // freeform journal entry shown on left page
   createdAt: string;
 }
