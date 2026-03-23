@@ -110,6 +110,7 @@ interface VideoPlayerProps {
 function VideoPlayer({ clips }: VideoPlayerProps) {
   const [clipIndex, setClipIndex] = useState(0);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
 
   // Get cached URLs for all clips
   const cachedClips = useAssetUrls(clips);
@@ -130,6 +131,51 @@ function VideoPlayer({ clips }: VideoPlayerProps) {
 
   const handleVideoEnded = () => setClipIndex((i) => (i + 1) % clips.length);
 
+  // Capture first frame and paint the same halftone dot overlay as DitheredImage
+  const paintOverlay = useCallback((video: HTMLVideoElement) => {
+    const canvas = overlayRef.current;
+    if (!canvas) return;
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    if (!w || !h) return;
+
+    const off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    const offCtx = off.getContext('2d')!;
+    offCtx.drawImage(video, 0, 0, w, h);
+
+    let imageData: ImageData;
+    try {
+      imageData = offCtx.getImageData(0, 0, w, h);
+    } catch {
+      return; // cross-origin frame — skip overlay
+    }
+    const data = imageData.data;
+
+    canvas.width  = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, w, h);
+
+    const dotSize    = 2;
+    const spacing    = 5;
+    const maxOpacity = 0.18;
+
+    ctx.save();
+    for (let y = 0; y < h; y += spacing) {
+      for (let x = 0; x < w; x += spacing) {
+        const idx = (y * w + x) * 4;
+        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 765;
+        const opacity = brightness * maxOpacity;
+        ctx.beginPath();
+        ctx.arc(x, y, dotSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }, []);
+
   return (
     <>
       {cachedClips.map((cachedClip, i) => (
@@ -145,11 +191,25 @@ function VideoPlayer({ clips }: VideoPlayerProps) {
           playsInline
           preload="auto"
           onCanPlay={(e) => {
-            if (i === clipIndex) e.currentTarget.play().catch(() => {});
+            if (i === clipIndex) {
+              e.currentTarget.play().catch(() => {});
+              paintOverlay(e.currentTarget);
+            }
           }}
           onEnded={i === clipIndex ? handleVideoEnded : undefined}
         />
       ))}
+      {/* Halftone dot overlay — sits above the video, pointer-events: none */}
+      <canvas
+        ref={overlayRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      />
     </>
   );
 }

@@ -125,12 +125,11 @@
   }
 
   .bookShell {
-    /* Scale book to fit mobile viewport width:
-       total_width = --bh * 1.44 + 2 * --cx  ≤  100vw - 16px
-       → --bh = (100vw - 16px - 2 * --cx) / 1.44 */
-    --cx: 20px;
-    --cy: 20px;
-    --bh: min(calc((100vw - 56px) / 1.44), 65dvh, 380px);
+    /* Width-driven sizing: total shell width = --bh * 1.44 + 2*--cx
+       Set --cx=16px → 48px total horizontal budget → --bh = (100vw - 48px) / 1.44 */
+    --cx: 16px;
+    --cy: 16px;
+    --bh: clamp(180px, calc((100vw - 48px) / 1.44), 380px);
   }
 
   /* Hide nav arrows on mobile — swipe gestures handle navigation */
@@ -535,6 +534,7 @@
   border-radius: 6.3%;
   overflow: hidden;
   flex-shrink: 0;
+  position: relative;
 }
 
 .stampImgBlank {
