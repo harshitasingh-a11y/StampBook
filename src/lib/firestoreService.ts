@@ -51,3 +51,14 @@ export const getSharedPages = async (ownerUid: string, bookId: string) => {
     return [];
   }
 };
+
+// Fetch all books for the current user (used for manual refresh)
+export const getUserBooks = async (uid: string): Promise<Book[]> => {
+  try {
+    const snapshot = await getDocs(booksRef(uid));
+    return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }) as Book);
+  } catch (error) {
+    console.error('Error fetching user books:', error);
+    return [];
+  }
+};

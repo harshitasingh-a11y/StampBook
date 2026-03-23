@@ -35,20 +35,22 @@ export default function BookView() {
 
   // Load shared book data
   useEffect(() => {
-    if (isSharedView && bookId && ownerUid) {
-      setIsLoadingShared(true);
-      Promise.all([
-        getSharedBook(ownerUid, bookId),
-        getSharedPages(ownerUid, bookId),
-      ])
-        .then(([book, pages]) => {
-          if (book) {
-            setSharedBook(book);
-            setSharedPages(pages.sort((a, b) => a.position - b.position));
-          }
-        })
-        .finally(() => setIsLoadingShared(false));
-    }
+    if (!isSharedView || !bookId || !ownerUid) return;
+    let cancelled = false;
+    setIsLoadingShared(true);
+    Promise.all([
+      getSharedBook(ownerUid, bookId),
+      getSharedPages(ownerUid, bookId),
+    ])
+      .then(([book, pages]) => {
+        if (cancelled) return;
+        if (book) {
+          setSharedBook(book);
+          setSharedPages(pages.sort((a, b) => a.position - b.position));
+        }
+      })
+      .finally(() => { if (!cancelled) setIsLoadingShared(false); });
+    return () => { cancelled = true; };
   }, [isSharedView, bookId, ownerUid]);
 
   const book = isSharedView ? sharedBook : books.find((b) => b.id === bookId);
@@ -113,7 +115,7 @@ export default function BookView() {
     }
   }, [isSharedView, editAccess, ownerUid]);
 
-  const handleBackClick = useCallback(() => {
+  const handleBackClick = useCallback(async () => {
     // Save shared book to current user's collection before navigating away
     if (isSharedView && book && ownerUid && currentUserUid && ownerUid !== currentUserUid) {
       try {
@@ -121,7 +123,7 @@ export default function BookView() {
           ...book,
           sharedFromOwnerUid: ownerUid,
         };
-        useBooksStore.getState().addSharedBook(sharedBookData);
+        await useBooksStore.getState().addSharedBook(sharedBookData);
       } catch (error) {
         console.error('Error saving shared book to collection:', error);
       }
