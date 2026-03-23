@@ -1,7 +1,10 @@
-import { Link } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { Book } from '@/types/book';
 import { THEME_HEX } from '@/types/book';
+import BookContextMenu from '@/components/BookContextMenu/BookContextMenu';
+import { useBooksStore } from '@/stores/booksStore';
 import styles from './BookCard.module.css';
 
 const CLIP_IMG = '/static/clip.svg';
@@ -24,8 +27,34 @@ function hashToRotation(id: string): number {
 }
 
 export default function BookCard({ book, index }: BookCardProps) {
+  const navigate = useNavigate();
+  const cardRef = useRef<HTMLDivElement>(null);
   const rotation = hashToRotation(book.id);
   const bgColor = THEME_HEX[book.colorTheme] ?? '#5e6b7a';
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
+  const uid = useBooksStore((s) => s.uid) || '';
+
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If Ctrl/Cmd is pressed, show the menu
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Position menu at the bottom of the card, centered horizontally
+      if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        setMenuPos({
+          x: rect.left + rect.width / 2 - 80,
+          y: rect.bottom + 10,
+        });
+      }
+      setMenuOpen(true);
+    } else {
+      // Normal click - navigate to the book
+      navigate(`/book/${book.id}`);
+    }
+  };
 
   return (
     <motion.div
@@ -38,7 +67,14 @@ export default function BookCard({ book, index }: BookCardProps) {
       style={{ '--rotation': `${rotation}deg` } as React.CSSProperties}
       className={styles.wrapper}
     >
-      <Link to={`/book/${book.id}`} className={styles.card}>
+      <div
+        ref={cardRef}
+        className={styles.card}
+        onClick={handleCardClick}
+        role="button"
+        tabIndex={0}
+        style={{ cursor: 'pointer' }}
+      >
         {/* Metal clip at top */}
         <div className={styles.clipArea}>
           <img src={CLIP_IMG} alt="" className={styles.clipImg} />
@@ -75,7 +111,17 @@ export default function BookCard({ book, index }: BookCardProps) {
             </span>
           </div>
         </div>
-      </Link>
+      </div>
+
+      {/* Context Menu */}
+      <BookContextMenu
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        bookId={book.id}
+        bookTitle={book.title}
+        ownerUid={uid}
+        position={menuPos}
+      />
     </motion.div>
   );
 }

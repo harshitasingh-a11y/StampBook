@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Camera, ImageIcon, Film, Share2, Pencil, Trash2, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Camera, ImageIcon, Film, Pencil, Trash2, Check } from 'lucide-react';
 import type { Page, Stamp } from '@/types/page';
 import { usePagesStore } from '@/stores/pagesStore';
 import { useBooksStore } from '@/stores/booksStore';
@@ -330,6 +330,9 @@ interface Props {
   accentColor: string;
   currentIndex: number;
   onIndexChange: (idx: number) => void;
+  readOnly?: boolean;
+  onUpdateText?: (pageId: string, text: string) => void;
+  onDeletePage?: (pageId: string) => void;
 }
 
 type Flip = { dir: 1 | -1; fromIdx: number; toIdx: number };
@@ -486,23 +489,31 @@ function RightFace({ page, accentColor, idx, editable }: { page: Page; accentCol
 }
 
 /* ─── Main component ─────────────────────────────────────────────── */
-export default function PageFlipContainer({ pages, accentColor, currentIndex, onIndexChange }: Props) {
+export default function PageFlipContainer({ pages, accentColor, currentIndex, onIndexChange, readOnly, onUpdateText, onDeletePage }: Props) {
   const [flip, setFlip] = useState<Flip | null>(null);
   const [isEditingText, setIsEditingText] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isFlipping = flip !== null;
   const lastFlippedIdxRef = useRef(currentIndex);
-  const updateJournalText = usePagesStore((s) => s.updateJournalText);
-  const deletePage = usePagesStore((s) => s.deletePage);
+  const storeUpdateJournalText = usePagesStore((s) => s.updateJournalText);
+  const storeDeletePage = usePagesStore((s) => s.deletePage);
+
+  // Use custom handlers if provided (for shared books), otherwise use store
+  const updateJournalText = onUpdateText || storeUpdateJournalText;
+  const deletePage = onDeletePage || storeDeletePage;
 
   // Auto-enter edit mode for empty pages, exit edit mode when switching pages
+  // Don't allow edit mode for read-only (shared) books
   useEffect(() => {
     const page = pages[currentIndex];
-    if (!page) return;
+    if (!page || readOnly) {
+      setIsEditMode(false);
+      return;
+    }
     const isEmpty = !page.journalText?.trim() && page.stamps.length === 0;
     setIsEditMode(isEmpty);
-  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentIndex, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const triggerFlip = useCallback(
     (next: number, dir: 1 | -1) => {
@@ -580,34 +591,35 @@ export default function PageFlipContainer({ pages, accentColor, currentIndex, on
         <div className={styles.bookShell}>
 
           {/* ── Page action icons — above teal shape, top-right ── */}
-          <div className={styles.pageActions}>
-            {isEditMode && (
-              <button
-                className={styles.saveBtn}
-                onClick={() => setIsEditMode(false)}
-                aria-label="Save changes"
-              >
-                <Check size={14} />
-                <span>Save Changes</span>
-              </button>
-            )}
-            {([
-              { icon: <Share2 size={16} />, label: 'Share this page' },
-              { icon: <Pencil size={16} />, label: 'Edit this page', onClick: () => setIsEditMode(true), active: isEditMode },
-              { icon: <Trash2 size={16} />, label: 'Delete this page', danger: true, onClick: () => setShowDeleteConfirm(true) },
-            ] as { icon: React.ReactNode; label: string; danger?: boolean; onClick?: () => void; active?: boolean }[]).map(({ icon, label, danger, onClick, active }) => (
-              <div key={label} className={styles.actionWrap}>
+          {!readOnly && (
+            <div className={styles.pageActions}>
+              {isEditMode && (
                 <button
-                  className={`${styles.actionBtn} ${danger ? styles.actionBtnDanger : ''} ${active ? styles.actionBtnActive : ''}`}
-                  aria-label={label}
-                  onClick={onClick}
+                  className={styles.saveBtn}
+                  onClick={() => setIsEditMode(false)}
+                  aria-label="Save changes"
                 >
-                  {icon}
+                  <Check size={14} />
+                  <span>Save Changes</span>
                 </button>
-                <span className={styles.tooltip}>{label}</span>
-              </div>
-            ))}
-          </div>
+              )}
+              {([
+                { icon: <Pencil size={16} />, label: 'Edit this page', onClick: () => setIsEditMode(true), active: isEditMode },
+                { icon: <Trash2 size={16} />, label: 'Delete this page', danger: true, onClick: () => setShowDeleteConfirm(true) },
+              ] as { icon: React.ReactNode; label: string; danger?: boolean; onClick?: () => void; active?: boolean }[]).map(({ icon, label, danger, onClick, active }) => (
+                <div key={label} className={styles.actionWrap}>
+                  <button
+                    className={`${styles.actionBtn} ${danger ? styles.actionBtnDanger : ''} ${active ? styles.actionBtnActive : ''}`}
+                    aria-label={label}
+                    onClick={onClick}
+                  >
+                    {icon}
+                  </button>
+                  <span className={styles.tooltip}>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* ── Book cover (behind pages) ──────────────────────── */}
           <div className={styles.bookCoverBg}>

@@ -1,0 +1,195 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 450px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close:hover {
+  color: #333;
+}
+
+.heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.description {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 24px 0;
+}
+
+.permissionSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.permissionLabel {
+  flex: 1;
+}
+
+.permissionLabel > span {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.permissionDescription {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+.toggleBtn {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  background: #ddd;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.toggleBtn:hover {
+  background: #ccc;
+}
+
+.toggleBtn.toggleBtnOn {
+  background: #4caf50;
+}
+
+.toggleBtn.toggleBtnOn:hover {
+  background: #45a049;
+}
+
+.toggleCircle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: left 0.2s;
+}
+
+.toggleBtn.toggleBtnOn .toggleCircle {
+  left: 22px;
+}
+
+.linkSection {
+  margin-bottom: 20px;
+}
+
+.linkBox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.linkInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: #333;
+  font-family: 'Monaco', 'Courier New', monospace;
+  outline: none;
+  user-select: all;
+}
+
+.linkInput::placeholder {
+  color: #999;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.copyBtn:hover {
+  color: #1a1a1a;
+}
+
+.copiedMessage {
+  font-size: 12px;
+  color: #4caf50;
+  display: block;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.shareBtn {
+  width: 100%;
+  padding: 12px 16px;
+  background: #2c3e6b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.shareBtn:hover {
+  background: #1e2a4e;
+}
+
+.shareBtn:active {
+  transform: scale(0.98);
+}

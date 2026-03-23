@@ -3,7 +3,7 @@ import type { Book } from '@/types/book';
 export const mockBooks: Book[] = [
   {
     id: 'mock-bentota-2026',
-    title: 'Bentota Beach 2026',
+    title: 'Vacations 2026',
     coverImage: null,
     colorTheme: 'teal',
     pageCount: 8,

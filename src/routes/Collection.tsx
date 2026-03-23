@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LayoutGroup } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import BookCard from '@/components/BookCard/BookCard';
@@ -10,6 +11,21 @@ import styles from './Collection.module.css';
 export default function Collection() {
   const books = useBooksStore((s) => s.books);
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Handle shared book links
+  useEffect(() => {
+    const sharedBookId = searchParams.get('share');
+    const ownerUid = searchParams.get('owner');
+    const editAccess = searchParams.get('edit');
+
+    if (sharedBookId && ownerUid) {
+      // Navigate to the shared book view
+      const url = `/book/${sharedBookId}?owner=${ownerUid}${editAccess ? '&edit=true' : ''}`;
+      navigate(url, { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   return (
     <div className={styles.page}>

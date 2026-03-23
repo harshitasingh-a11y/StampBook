@@ -33,6 +33,12 @@ export function useFirestoreSync() {
         mockPages.forEach((page) => savePage(uid, page));
       } else {
         const books = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Book);
+        // One-time title migration for renamed mock book
+        books.forEach((b) => {
+          if (b.id === 'mock-bentota-2026' && b.title === 'Bentota Beach 2026') {
+            saveBook(uid, { ...b, title: 'Vacations 2026' });
+          }
+        });
         useBooksStore.setState({ books });
       }
     });

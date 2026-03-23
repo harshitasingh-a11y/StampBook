@@ -3,9 +3,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f0eb;
-  background-image: url('/static/texture.jpg');
+  background-color: #a8c4d4;
+  background-image: url('/static/login-bg.jpeg');
   background-size: cover;
+  background-position: center;
 }
 
 .card {
