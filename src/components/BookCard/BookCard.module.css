@@ -190,8 +190,8 @@
   font-family: var(--font-body);
   font-size: clamp(6px, 0.8vw, 8px);
   font-weight: 600;
-  background: #e8f4f8;
-  color: #0066cc;
+  background: rgba(122, 158, 126, 0.15);
+  color: #5a6b5f;
   padding: 1px 3px;
   border-radius: 2px;
   white-space: nowrap;
