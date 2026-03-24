@@ -36,7 +36,7 @@ export default function ParticipantsAvatar({
   const getColor = (canEdit: boolean) => (canEdit ? accentColor : '#c0bab3');
 
   // Build participant list
-  const participants = isSharedView
+  const rawParticipants = isSharedView
     ? [
         { name: ownerName, role: 'owner', color: accentColor },
         { name: 'You', role: yourAccessLevel, color: getColor(yourAccessLevel === 'can edit') },
@@ -49,6 +49,9 @@ export default function ParticipantsAvatar({
           color: getColor(r.canEdit),
         })),
       ];
+
+  // Filter out participants with empty names
+  const participants = rawParticipants.filter((p) => p.name?.trim());
 
   const displayCount = Math.min(4, participants.length);
   const moreCount = Math.max(0, participants.length - 4);
