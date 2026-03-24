@@ -11,6 +11,7 @@ import styles from './Collection.module.css';
 export default function Collection() {
   const books = useBooksStore((s) => s.books);
   const [modalOpen, setModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'mine' | 'shared'>('all');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -27,13 +28,23 @@ export default function Collection() {
     }
   }, [searchParams, navigate]);
 
+  const myBooks = books.filter((b) => !b.isShared && !b.sharedFromOwnerUid);
+  const sharedBooks = books.filter((b) => b.isShared || b.sharedFromOwnerUid);
+
+  const displayedBooks =
+    activeTab === 'mine' ? myBooks :
+    activeTab === 'shared' ? sharedBooks :
+    books;
+
+  const displayCount = displayedBooks.length;
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>My Collection</h1>
           <span className={styles.count}>
-            {books.length} {books.length === 1 ? 'book' : 'books'}
+            {displayCount} {displayCount === 1 ? 'book' : 'books'}
           </span>
         </div>
         <button className={styles.createBtn} onClick={() => setModalOpen(true)}>
@@ -42,14 +53,35 @@ export default function Collection() {
         </button>
       </header>
 
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === 'all' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('all')}
+        >
+          All
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'mine' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('mine')}
+        >
+          My Books
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'shared' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('shared')}
+        >
+          Shared
+        </button>
+      </div>
+
       <NewBookModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
 
       <LayoutGroup>
         <div className={styles.grid}>
-          {books.map((book, i) => (
+          {displayedBooks.map((book, i) => (
             <BookCard key={book.id} book={book} index={i} />
           ))}
-          <NewBookCard />
+          {activeTab === 'mine' && <NewBookCard />}
         </div>
       </LayoutGroup>
     </div>

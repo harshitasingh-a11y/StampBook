@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, Check } from 'lucide-react';
+import { useBooksStore } from '@/stores/booksStore';
+import { saveBook } from '@/lib/firestoreService';
 import styles from './ShareBookModal.module.css';
 
 interface ShareBookModalProps {
@@ -14,6 +16,7 @@ interface ShareBookModalProps {
 export default function ShareBookModal({ isOpen, bookId, bookTitle, ownerUid, onClose }: ShareBookModalProps) {
   const [copied, setCopied] = useState(false);
   const [allowEdit, setAllowEdit] = useState(false);
+  const getBookById = useBooksStore((s) => s.getBookById);
 
   const shareUrl = `${window.location.origin}/?share=${bookId}&owner=${ownerUid}${allowEdit ? '&edit=true' : ''}`;
 
@@ -21,6 +24,19 @@ export default function ShareBookModal({ isOpen, bookId, bookTitle, ownerUid, on
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+
+      // Mark book as shared
+      const book = getBookById(bookId);
+      if (book && !book.isShared) {
+        const updatedBook = { ...book, isShared: true };
+        await saveBook(ownerUid, updatedBook);
+        // Update local store
+        const books = useBooksStore.getState().books;
+        useBooksStore.setState({
+          books: books.map((b) => (b.id === bookId ? updatedBook : b)),
+        });
+      }
+
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);

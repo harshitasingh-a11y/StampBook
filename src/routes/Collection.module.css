@@ -16,6 +16,36 @@
   justify-content: space-between;
 }
 
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.tab {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  color: #888;
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tab:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #555;
+}
+
+.tabActive {
+  background: #2c2c2c;
+  border-color: #2c2c2c;
+  color: #fff !important;
+}
+
 .createBtn {
   display: flex;
   align-items: center;

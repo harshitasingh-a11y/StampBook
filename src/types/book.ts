@@ -6,6 +6,7 @@ export interface Book {
   pageCount: number;
   createdAt: string;
   sharedFromOwnerUid?: string; // UID of the original owner if this is a shared book
+  isShared?: boolean; // True if this book has been shared with others
 }
 
 export const THEME_COLORS: Record<string, string> = {
