@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import ColorPicker from '@/components/ColorPicker/ColorPicker';
 import { useBooksStore } from '@/stores/booksStore';
+import { usePagesStore } from '@/stores/pagesStore';
 import { THEME_HEX } from '@/types/book';
 import type { Book, CoverSticker } from '@/types/book';
 import BookCoverPreview from './BookCoverPreview';
@@ -33,6 +35,7 @@ export default function NewBookModal({ isOpen, onClose, editBook }: NewBookModal
   const boardRef = useRef<HTMLDivElement>(null);
   const addBook = useBooksStore((s) => s.addBook);
   const updateBook = useBooksStore((s) => s.updateBook);
+  const addPage = usePagesStore((s) => s.addPage);
 
   // Populate state when opening
   useEffect(() => {
@@ -57,7 +60,8 @@ export default function NewBookModal({ isOpen, onClose, editBook }: NewBookModal
     if (isEditMode && editBook) {
       updateBook(editBook.id, { title: title.trim(), colorTheme, stickers, clipStyle });
     } else {
-      addBook(title.trim(), colorTheme, stickers, clipStyle);
+      const newId = addBook(title.trim(), colorTheme, stickers, clipStyle);
+      addPage(newId);
     }
     onClose();
   };
@@ -87,7 +91,7 @@ export default function NewBookModal({ isOpen, onClose, editBook }: NewBookModal
 
   const accentColor = colorTheme.startsWith('#') ? colorTheme : THEME_HEX[colorTheme];
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -122,7 +126,10 @@ export default function NewBookModal({ isOpen, onClose, editBook }: NewBookModal
                   className={styles.titleInput}
                   placeholder="Name your book..."
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTitle(val.length > 0 ? val.charAt(0).toUpperCase() + val.slice(1) : val);
+                  }}
                   onKeyDown={handleKeyDown}
                   maxLength={60}
                 />
@@ -169,6 +176,7 @@ export default function NewBookModal({ isOpen, onClose, editBook }: NewBookModal
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

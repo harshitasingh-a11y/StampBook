@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Share2 } from 'lucide-react';
 import { useBooksStore } from '@/stores/booksStore';
 import { usePagesStore } from '@/stores/pagesStore';
 import { THEME_HEX } from '@/types/book';
-import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage, getDisplayNameFromEmail } from '@/lib/firestoreService';
+import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage, getDisplayNameFromEmail, getUserEmail } from '@/lib/firestoreService';
 import type { Book } from '@/types/book';
 import type { Page } from '@/types/page';
 import PageFlipContainer from '@/components/PageFlipContainer/PageFlipContainer';
@@ -29,6 +29,7 @@ export default function BookView() {
   const [sharedBook, setSharedBook] = useState<Book | null>(null);
   const [sharedPages, setSharedPages] = useState<Page[]>([]);
   const [isLoadingShared, setIsLoadingShared] = useState(false);
+  const [ownerDisplayName, setOwnerDisplayName] = useState<string | null>(null);
 
   // Get current book from store
   const ownBook = books.find((b) => b.id === bookId);
@@ -48,20 +49,31 @@ export default function BookView() {
   // Determine if viewing shared book
   const isSharedView = !!ownerUid && ownerUid !== currentUserUid;
 
-  // Load shared book data
+  // Load shared book data and owner info
   useEffect(() => {
     if (!isSharedView || !bookId || !ownerUid) return;
     let cancelled = false;
     setIsLoadingShared(true);
+
     Promise.all([
       getSharedBook(ownerUid, bookId),
       getSharedPages(ownerUid, bookId),
+      getUserEmail(ownerUid),
     ])
-      .then(([book, pages]) => {
+      .then(([book, pages, ownerEmail]) => {
         if (cancelled) return;
         if (book) {
           setSharedBook(book);
           setSharedPages(pages.sort((a, b) => a.position - b.position));
+
+          // Set owner display name from book or extract from fetched email
+          let displayName = book.ownerDisplayName;
+          if (!displayName && ownerEmail) {
+            displayName = getDisplayNameFromEmail(ownerEmail);
+          }
+          if (displayName) {
+            setOwnerDisplayName(displayName);
+          }
         }
       })
       .finally(() => { if (!cancelled) setIsLoadingShared(false); });
@@ -195,12 +207,8 @@ export default function BookView() {
                 // Viewer perspective: owner chip + your access chip
                 <>
                   {(() => {
-                    // Use ownerDisplayName if available, otherwise extract from email or use 'Owner'
-                    let displayName = book.ownerDisplayName;
-                    if (!displayName && book.ownerEmail) {
-                      displayName = getDisplayNameFromEmail(book.ownerEmail);
-                    }
-                    displayName = displayName || 'Owner';
+                    // Use ownerDisplayName state (fetched from email) or book.ownerDisplayName
+                    const displayName = ownerDisplayName || book.ownerDisplayName || 'Owner';
                     return (
                       <div className={styles.participantChip}>
                         <span className={styles.chipAvatar} style={{ background: '#c8a97e' }}>

@@ -10,6 +10,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { saveUserEmail } from '@/lib/firestoreService';
 
 interface AuthContextType {
   user: User | null;
@@ -36,6 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           displayName: firebaseUser.displayName,
           photoURL: firebaseUser.photoURL,
         }));
+        // Save user email to Firestore for shared book display
+        if (firebaseUser.email) {
+          saveUserEmail(firebaseUser.uid, firebaseUser.email);
+        }
       } else {
         localStorage.removeItem('user');
       }

@@ -29,7 +29,7 @@
   left: 9.76%;
   width: 28.22%;
   height: 15.05%;
-  z-index: 3;
+  z-index: 20;
 }
 
 .clipImg {
@@ -53,6 +53,7 @@
   background-color: var(--book-color, #5e6b7a);
   box-shadow: var(--shadow-card);
   transition: box-shadow 0.2s ease;
+  z-index: 1;
 }
 
 .card:hover .board {

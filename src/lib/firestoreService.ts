@@ -73,3 +73,25 @@ export const getDisplayNameFromEmail = (email: string): string => {
     .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(' ');
 };
+
+// Save user email when they authenticate
+export const saveUserEmail = async (uid: string, email: string) => {
+  try {
+    const userRef = doc(db, 'users', uid);
+    await setDoc(userRef, { email }, { merge: true });
+  } catch (error) {
+    console.error('Error saving user email:', error);
+  }
+};
+
+// Fetch user email by UID
+export const getUserEmail = async (uid: string): Promise<string | null> => {
+  try {
+    const userRef = doc(db, 'users', uid);
+    const snapshot = await getDoc(userRef);
+    return snapshot.data()?.email || null;
+  } catch (error) {
+    console.error('Error fetching user email:', error);
+    return null;
+  }
+};

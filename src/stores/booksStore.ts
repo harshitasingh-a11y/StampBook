@@ -6,7 +6,7 @@ interface BooksState {
   uid: string | null;
   books: Book[];
   setUid: (uid: string | null) => void;
-  addBook: (title: string, colorTheme: string, stickers?: CoverSticker[], clipStyle?: string) => void;
+  addBook: (title: string, colorTheme: string, stickers?: CoverSticker[], clipStyle?: string) => string;
   updateBook: (id: string, changes: Partial<Pick<Book, 'title' | 'colorTheme' | 'stickers' | 'clipStyle'>>) => void;
   addSharedBook: (book: Book) => Promise<void>;
   removeBook: (id: string) => void;
@@ -19,7 +19,7 @@ export const useBooksStore = create<BooksState>()((set, get) => ({
 
   setUid: (uid) => set({ uid }),
 
-  addBook: (title, colorTheme, stickers, clipStyle) => {
+  addBook: (title: string, colorTheme: string, stickers?: CoverSticker[], clipStyle?: string): string => {
     const uid = get().uid;
     const newBook: Book = {
       id: crypto.randomUUID(),
@@ -33,6 +33,7 @@ export const useBooksStore = create<BooksState>()((set, get) => ({
     };
     set((state) => ({ books: [...state.books, newBook] }));
     if (uid) fbSaveBook(uid, newBook);
+    return newBook.id;
   },
 
   updateBook: (id, changes) => {
