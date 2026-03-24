@@ -33,8 +33,17 @@ export default function BookView() {
   // Get current book from store
   const ownBook = books.find((b) => b.id === bookId);
 
-  // Determine the actual owner UID (from URL param or from book's sharedFromOwnerUid)
-  const ownerUid = urlOwnerUid || ownBook?.sharedFromOwnerUid;
+  // If this is a shared book opened from collection (no owner URL param),
+  // redirect to the shared view with owner param
+  useEffect(() => {
+    if (!urlOwnerUid && ownBook?.sharedFromOwnerUid && currentUserUid) {
+      const owner = ownBook.sharedFromOwnerUid;
+      navigate(`/book/${bookId}?owner=${owner}`, { replace: true });
+    }
+  }, [bookId, urlOwnerUid, ownBook?.sharedFromOwnerUid, currentUserUid, navigate]);
+
+  // Determine the actual owner UID (from URL param)
+  const ownerUid = urlOwnerUid;
 
   // Determine if viewing shared book
   const isSharedView = !!ownerUid && ownerUid !== currentUserUid;
