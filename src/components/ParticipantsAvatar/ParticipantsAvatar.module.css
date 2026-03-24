@@ -109,6 +109,14 @@
 }
 
 .participantRole {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   color: #999;
+}
+
+.roleIcon {
+  color: #aaa;
+  flex-shrink: 0;
 }

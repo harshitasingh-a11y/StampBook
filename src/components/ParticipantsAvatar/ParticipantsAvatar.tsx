@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Crown, Eye, Pencil } from 'lucide-react';
 import type { ShareRecipient } from '@/types/book';
 import styles from './ParticipantsAvatar.module.css';
 
@@ -8,6 +8,7 @@ interface ParticipantsAvatarProps {
   recipients?: ShareRecipient[];
   yourAccessLevel?: 'can edit' | 'view only';
   isSharedView?: boolean;
+  accentColor?: string;
 }
 
 export default function ParticipantsAvatar({
@@ -15,6 +16,7 @@ export default function ParticipantsAvatar({
   recipients = [],
   yourAccessLevel = 'view only',
   isSharedView = false,
+  accentColor = '#5e6b7a',
 }: ParticipantsAvatarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,16 +33,16 @@ export default function ParticipantsAvatar({
   }, []);
 
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
-  const getColor = (canEdit: boolean) => (canEdit ? '#7aab99' : '#c0bab3');
+  const getColor = (canEdit: boolean) => (canEdit ? accentColor : '#c0bab3');
 
   // Build participant list
   const participants = isSharedView
     ? [
-        { name: ownerName, role: 'owner', color: '#c8a97e' },
+        { name: ownerName, role: 'owner', color: accentColor },
         { name: 'You', role: yourAccessLevel, color: getColor(yourAccessLevel === 'can edit') },
       ]
     : [
-        { name: 'You', role: 'owner', color: '#c8a97e' },
+        { name: 'You', role: 'owner', color: accentColor },
         ...recipients.map((r) => ({
           name: r.displayName,
           role: r.canEdit ? 'can edit' : 'view only',
@@ -88,9 +90,24 @@ export default function ParticipantsAvatar({
               <div className={styles.participantInfo}>
                 <div className={styles.participantName}>{p.name}</div>
                 <div className={styles.participantRole}>
-                  {p.role === 'owner' && '👑 owner'}
-                  {p.role === 'can edit' && '✏️ can edit'}
-                  {p.role === 'view only' && '👁️ view only'}
+                  {p.role === 'owner' && (
+                    <>
+                      <Crown size={14} strokeWidth={1.7} className={styles.roleIcon} />
+                      <span>owner</span>
+                    </>
+                  )}
+                  {p.role === 'can edit' && (
+                    <>
+                      <Pencil size={14} strokeWidth={1.7} className={styles.roleIcon} />
+                      <span>can edit</span>
+                    </>
+                  )}
+                  {p.role === 'view only' && (
+                    <>
+                      <Eye size={14} strokeWidth={1.7} className={styles.roleIcon} />
+                      <span>view only</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

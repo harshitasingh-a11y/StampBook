@@ -216,6 +216,7 @@ export default function BookView() {
               recipients={book.sharedWith}
               yourAccessLevel={isSharedView ? (editAccess ? 'can edit' : 'view only') : undefined}
               isSharedView={isSharedView}
+              accentColor={accentColor}
             />
           )}
           {!isSharedView && (
