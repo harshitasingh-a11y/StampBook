@@ -10,6 +10,7 @@ import type { Book } from '@/types/book';
 import type { Page } from '@/types/page';
 import PageFlipContainer from '@/components/PageFlipContainer/PageFlipContainer';
 import ShareBookModal from '@/components/ShareBookModal/ShareBookModal';
+import ParticipantsAvatar from '@/components/ParticipantsAvatar/ParticipantsAvatar';
 import styles from './BookView.module.css';
 
 export default function BookView() {
@@ -85,6 +86,14 @@ export default function BookView() {
     ? sharedPages
     : allPages.filter((p) => p.bookId === bookId).sort((a, b) => a.position - b.position);
 
+
+  // Auto-create a default page for books that have none
+  useEffect(() => {
+    if (!bookId || isSharedView || pages.length > 0) return;
+    // Only auto-create once the store is ready (book exists)
+    if (!ownBook) return;
+    addPage(bookId);
+  }, [bookId, isSharedView, pages.length, ownBook, addPage]);
 
   const hasEmptyPage = pages.some(
     (p) => !p.journalText?.trim() && p.stamps.length === 0
@@ -199,72 +208,27 @@ export default function BookView() {
             {book.title}
             {isSharedView && <span className={styles.sharedBadge}>Shared</span>}
           </h1>
-
-          {/* Sharing participants strip */}
+        </div>
+        <div className={styles.headerRight}>
           {(isSharedView || book.isShared) && (
-            <div className={styles.sharingStrip}>
-              {isSharedView ? (
-                // Viewer perspective: owner chip + your access chip
-                <>
-                  {(() => {
-                    // Use ownerDisplayName state (fetched from email) or book.ownerDisplayName
-                    const displayName = ownerDisplayName || book.ownerDisplayName || 'Owner';
-                    return (
-                      <div className={styles.participantChip}>
-                        <span className={styles.chipAvatar} style={{ background: '#c8a97e' }}>
-                          {displayName.charAt(0).toUpperCase()}
-                        </span>
-                        <span className={styles.chipName}>{displayName}</span>
-                        <span className={styles.chipRole}>owner</span>
-                      </div>
-                    );
-                  })()}
-                  <span className={styles.chipDivider}>·</span>
-                  <div className={styles.participantChip}>
-                    <span className={styles.chipAvatar} style={{ background: editAccess ? '#7aab99' : '#c0bab3' }}>
-                      Y
-                    </span>
-                    <span className={styles.chipName}>You</span>
-                    <span className={styles.chipRole}>{editAccess ? 'can edit' : 'view only'}</span>
-                  </div>
-                </>
-              ) : (
-                // Owner perspective: you chip + each recipient chip
-                <>
-                  <div className={styles.participantChip}>
-                    <span className={styles.chipAvatar} style={{ background: '#c8a97e' }}>
-                      Y
-                    </span>
-                    <span className={styles.chipName}>You</span>
-                    <span className={styles.chipRole}>owner</span>
-                  </div>
-                  {(book.sharedWith ?? []).map((r, i) => (
-                    <>
-                      <span key={`div-${i}`} className={styles.chipDivider}>·</span>
-                      <div key={i} className={styles.participantChip}>
-                        <span className={styles.chipAvatar} style={{ background: r.canEdit ? '#7aab99' : '#c0bab3' }}>
-                          {r.displayName.charAt(0).toUpperCase()}
-                        </span>
-                        <span className={styles.chipName}>{r.displayName}</span>
-                        <span className={styles.chipRole}>{r.canEdit ? 'can edit' : 'view only'}</span>
-                      </div>
-                    </>
-                  ))}
-                </>
-              )}
-            </div>
+            <ParticipantsAvatar
+              ownerName={ownerDisplayName || book.ownerDisplayName}
+              recipients={book.sharedWith}
+              yourAccessLevel={isSharedView ? (editAccess ? 'can edit' : 'view only') : undefined}
+              isSharedView={isSharedView}
+            />
+          )}
+          {!isSharedView && (
+            <button
+              className={styles.shareBtn}
+              onClick={() => setShowShareModal(true)}
+              aria-label="Share this book"
+              title="Share this book"
+            >
+              <Share2 size={20} />
+            </button>
           )}
         </div>
-        {!isSharedView && (
-          <button
-            className={styles.shareBtn}
-            onClick={() => setShowShareModal(true)}
-            aria-label="Share this book"
-            title="Share this book"
-          >
-            <Share2 size={20} />
-          </button>
-        )}
       </header>
 
       {/* Page area */}
