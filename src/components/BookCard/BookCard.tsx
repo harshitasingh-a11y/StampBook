@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react';
+import NewBookModal from '@/components/NewBookModal/NewBookModal';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { Book } from '@/types/book';
-import { THEME_HEX } from '@/types/book';
+import { THEME_HEX, CLIP_OPTIONS } from '@/types/book';
 import BookContextMenu from '@/components/BookContextMenu/BookContextMenu';
 import { useBooksStore } from '@/stores/booksStore';
 import styles from './BookCard.module.css';
 
-const CLIP_IMG = '/static/clip.svg';
+const DEFAULT_CLIP_IMG = '/static/clip.svg';
 const TEXTURE_IMG = '/static/texture.jpg';
 const BOARD_SHAPE_IMG = '/static/board-shape.svg';
 const STAMP_IMG = '/static/stamp.png';
@@ -30,9 +31,15 @@ export default function BookCard({ book, index }: BookCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const rotation = hashToRotation(book.id);
-  const bgColor = THEME_HEX[book.colorTheme] ?? '#5e6b7a';
+  const bgColor = book.colorTheme.startsWith('#')
+    ? book.colorTheme
+    : (THEME_HEX[book.colorTheme] ?? '#5e6b7a');
+  const clipSrc = book.clipStyle
+    ? (CLIP_OPTIONS.find((c) => c.key === book.clipStyle)?.src ?? DEFAULT_CLIP_IMG)
+    : DEFAULT_CLIP_IMG;
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
+  const [editOpen, setEditOpen] = useState(false);
   const uid = useBooksStore((s) => s.uid) || '';
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -77,7 +84,7 @@ export default function BookCard({ book, index }: BookCardProps) {
       >
         {/* Metal clip at top */}
         <div className={styles.clipArea}>
-          <img src={CLIP_IMG} alt="" className={styles.clipImg} />
+          <img src={clipSrc} alt="" className={styles.clipImg} />
         </div>
 
         {/* Clipboard board */}
@@ -91,17 +98,36 @@ export default function BookCard({ book, index }: BookCardProps) {
           {/* Board shadow/depth shape */}
           <img src={BOARD_SHAPE_IMG} alt="" className={styles.boardShape} />
 
-          {/* Memories sticker – top-right of board */}
-          <div className={styles.memoriesSticker}>
-            <img src={MEMORIES_IMG} alt="Memories" />
-          </div>
+          {/* Default stickers — only shown for books without saved stickers (backward compat) */}
+          {!book.stickers?.length && (
+            <>
+              <div className={styles.memoriesSticker}>
+                <img src={MEMORIES_IMG} alt="Memories" />
+              </div>
+              <div className={styles.stamp}>
+                <div className={styles.stampInner}>
+                  <img src={STAMP_IMG} alt="" />
+                </div>
+              </div>
+            </>
+          )}
 
-          {/* Postage stamp – rotated */}
-          <div className={styles.stamp}>
-            <div className={styles.stampInner}>
-              <img src={STAMP_IMG} alt="" />
-            </div>
-          </div>
+          {/* User-placed stickers (includes defaults for new books) */}
+          {book.stickers?.map((sticker) => (
+            <img
+              key={sticker.id}
+              src={sticker.src}
+              alt=""
+              className={styles.userSticker}
+              style={{
+                left: `${sticker.x}%`,
+                top: `${sticker.y}%`,
+                width: `${sticker.width}%`,
+                transform: `rotate(${sticker.rotation}deg)`,
+              }}
+              draggable={false}
+            />
+          ))}
 
           {/* Title label box – bottom left */}
           <div className={styles.titleLabel}>
@@ -126,6 +152,14 @@ export default function BookCard({ book, index }: BookCardProps) {
         bookTitle={book.title}
         ownerUid={uid}
         position={menuPos}
+        onEditCover={() => setEditOpen(true)}
+      />
+
+      {/* Edit Cover Modal */}
+      <NewBookModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        editBook={book}
       />
     </motion.div>
   );

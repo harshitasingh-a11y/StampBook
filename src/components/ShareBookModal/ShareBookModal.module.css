@@ -120,6 +120,41 @@
   left: 22px;
 }
 
+.recipientSection {
+  margin-bottom: 16px;
+}
+
+.recipientLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.recipientInput {
+  width: 100%;
+  padding: 10px 12px;
+  background: #f9f9f9;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.recipientInput:focus {
+  border-color: #c8a97e;
+}
+
+.recipientInput::placeholder {
+  color: #bbb;
+}
+
 .linkSection {
   margin-bottom: 20px;
 }

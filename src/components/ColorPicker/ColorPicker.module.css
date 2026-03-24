@@ -1,13 +1,14 @@
 .picker {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  justify-content: flex-start;
 }
 
 .swatch {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
   border-radius: var(--radius-full);
   border: 2px solid transparent;
   cursor: pointer;
@@ -25,4 +26,31 @@
 .swatch.active {
   border-color: rgba(0, 0, 0, 0.2);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.customSwatch {
+  background: conic-gradient(
+    hsl(0, 80%, 60%),
+    hsl(45, 80%, 60%),
+    hsl(90, 80%, 60%),
+    hsl(135, 80%, 60%),
+    hsl(180, 80%, 60%),
+    hsl(225, 80%, 60%),
+    hsl(270, 80%, 60%),
+    hsl(315, 80%, 60%),
+    hsl(360, 80%, 60%)
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+.colorInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  border: none;
+  padding: 0;
 }

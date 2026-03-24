@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, Check } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
 import { useBooksStore } from '@/stores/booksStore';
 import { saveBook } from '@/lib/firestoreService';
+import type { ShareRecipient } from '@/types/book';
 import styles from './ShareBookModal.module.css';
 
 interface ShareBookModalProps {
@@ -16,6 +18,7 @@ interface ShareBookModalProps {
 export default function ShareBookModal({ isOpen, bookId, bookTitle, ownerUid, onClose }: ShareBookModalProps) {
   const [copied, setCopied] = useState(false);
   const [allowEdit, setAllowEdit] = useState(false);
+  const [recipientName, setRecipientName] = useState('');
   const getBookById = useBooksStore((s) => s.getBookById);
 
   const shareUrl = `${window.location.origin}/?share=${bookId}&owner=${ownerUid}${allowEdit ? '&edit=true' : ''}`;
@@ -25,12 +28,25 @@ export default function ShareBookModal({ isOpen, bookId, bookTitle, ownerUid, on
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
 
-      // Mark book as shared
+      // Mark book as shared and record recipient + owner name
       const book = getBookById(bookId);
-      if (book && !book.isShared) {
-        const updatedBook = { ...book, isShared: true };
+      if (book) {
+        const auth = getAuth();
+        const ownerName = auth.currentUser?.displayName || auth.currentUser?.email || 'You';
+        const ownerEmail = auth.currentUser?.email || undefined;
+        const newRecipient: ShareRecipient = {
+          displayName: recipientName.trim() || 'Someone',
+          canEdit: allowEdit,
+        };
+        const existingRecipients = book.sharedWith ?? [];
+        const updatedBook = {
+          ...book,
+          isShared: true,
+          ownerDisplayName: ownerName,
+          ownerEmail: ownerEmail,
+          sharedWith: [...existingRecipients, newRecipient],
+        };
         await saveBook(ownerUid, updatedBook);
-        // Update local store
         const books = useBooksStore.getState().books;
         useBooksStore.setState({
           books: books.map((b) => (b.id === bookId ? updatedBook : b)),
@@ -99,6 +115,17 @@ export default function ShareBookModal({ isOpen, bookId, bookTitle, ownerUid, on
               >
                 <div className={styles.toggleCircle} />
               </button>
+            </div>
+
+            <div className={styles.recipientSection}>
+              <label className={styles.recipientLabel}>Sharing with (optional)</label>
+              <input
+                type="text"
+                className={styles.recipientInput}
+                placeholder="e.g. Priya, Mom, Travel buddy…"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+              />
             </div>
 
             <div className={styles.linkSection}>

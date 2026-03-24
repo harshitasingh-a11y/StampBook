@@ -1,0 +1,240 @@
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.card {
+  position: relative;
+  width: 240px;
+  aspect-ratio: 239 / 364;
+  flex-shrink: 0;
+}
+
+/* Clip */
+.clipArea {
+  position: absolute;
+  top: 0;
+  left: 9.76%;
+  width: 28.22%;
+  height: 15.05%;
+  z-index: 10;
+}
+
+.clipImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Board */
+.board {
+  position: absolute;
+  top: 12.61%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background-color: var(--book-color, #5e6b7a);
+  box-shadow: var(--shadow-card);
+  z-index: 1;
+}
+
+/* Texture */
+.texture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: soft-light;
+  opacity: 0.55;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Board shape */
+.boardShape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  mix-blend-mode: multiply;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Memories sticker */
+.memoriesSticker {
+  position: absolute;
+  left: 55.4%;
+  top: 8.4%;
+  width: 25.07%;
+  height: 18.89%;
+  z-index: 4;
+}
+
+.memoriesSticker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Stamp */
+.stamp {
+  position: absolute;
+  left: 65.5%;
+  top: 24.15%;
+  width: 22.7%;
+  height: 14.22%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+}
+
+.stampInner {
+  transform: rotate(9.03deg);
+  width: 90%;
+  height: 84%;
+  overflow: hidden;
+}
+
+.stampInner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Title label */
+.titleLabel {
+  position: absolute;
+  left: 8.71%;
+  bottom: 8.71%;
+  width: 75%;
+  background: #ece6da;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  opacity: 0.9;
+  z-index: 5;
+  padding: 5px 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.labelTitle {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 12px;
+  color: #0a0b06;
+  line-height: 1.15;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.labelPages {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 10px;
+  color: #4a301c;
+  opacity: 0.75;
+}
+
+/* Default stickers (preview only) */
+.defaultSticker {
+  position: absolute;
+  z-index: 4;
+}
+
+.defaultSticker .removeBtn {
+  opacity: 0;
+}
+
+.defaultSticker:hover .removeBtn {
+  opacity: 1;
+}
+
+.defaultStickerImg {
+  width: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+/* User-placed stickers */
+.stickerOnBoard {
+  position: absolute;
+  transform-origin: center center;
+  cursor: grab;
+  z-index: 6;
+  user-select: none;
+}
+
+.stickerOnBoard:active {
+  cursor: grabbing;
+}
+
+.stickerImg {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.removeBtn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.stickerOnBoard:hover .removeBtn {
+  opacity: 1;
+}
+
+.resizeHandle {
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+  padding: 0;
+  cursor: se-resize;
+}
+
+.stickerOnBoard:hover .resizeHandle {
+  opacity: 1;
+}

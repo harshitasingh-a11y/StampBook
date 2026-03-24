@@ -62,3 +62,14 @@ export const getUserBooks = async (uid: string): Promise<Book[]> => {
     return [];
   }
 };
+
+// Extract a display name from an email address
+export const getDisplayNameFromEmail = (email: string): string => {
+  if (!email) return 'Someone';
+  // Extract the part before @ symbol and capitalize each word
+  const name = email.split('@')[0];
+  return name
+    .split(/[._-]/)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+};

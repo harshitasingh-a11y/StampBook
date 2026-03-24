@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Share2 } from 'lucide-react';
 import { useBooksStore } from '@/stores/booksStore';
 import { usePagesStore } from '@/stores/pagesStore';
 import { THEME_HEX } from '@/types/book';
-import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage } from '@/lib/firestoreService';
+import { getSharedBook, getSharedPages, savePage, deletePage as fbDeletePage, getDisplayNameFromEmail } from '@/lib/firestoreService';
 import type { Book } from '@/types/book';
 import type { Page } from '@/types/page';
 import PageFlipContainer from '@/components/PageFlipContainer/PageFlipContainer';
@@ -187,6 +187,65 @@ export default function BookView() {
             {book.title}
             {isSharedView && <span className={styles.sharedBadge}>Shared</span>}
           </h1>
+
+          {/* Sharing participants strip */}
+          {(isSharedView || book.isShared) && (
+            <div className={styles.sharingStrip}>
+              {isSharedView ? (
+                // Viewer perspective: owner chip + your access chip
+                <>
+                  {(() => {
+                    // Use ownerDisplayName if available, otherwise extract from email or use 'Owner'
+                    let displayName = book.ownerDisplayName;
+                    if (!displayName && book.ownerEmail) {
+                      displayName = getDisplayNameFromEmail(book.ownerEmail);
+                    }
+                    displayName = displayName || 'Owner';
+                    return (
+                      <div className={styles.participantChip}>
+                        <span className={styles.chipAvatar} style={{ background: '#c8a97e' }}>
+                          {displayName.charAt(0).toUpperCase()}
+                        </span>
+                        <span className={styles.chipName}>{displayName}</span>
+                        <span className={styles.chipRole}>owner</span>
+                      </div>
+                    );
+                  })()}
+                  <span className={styles.chipDivider}>·</span>
+                  <div className={styles.participantChip}>
+                    <span className={styles.chipAvatar} style={{ background: editAccess ? '#7aab99' : '#c0bab3' }}>
+                      Y
+                    </span>
+                    <span className={styles.chipName}>You</span>
+                    <span className={styles.chipRole}>{editAccess ? 'can edit' : 'view only'}</span>
+                  </div>
+                </>
+              ) : (
+                // Owner perspective: you chip + each recipient chip
+                <>
+                  <div className={styles.participantChip}>
+                    <span className={styles.chipAvatar} style={{ background: '#c8a97e' }}>
+                      Y
+                    </span>
+                    <span className={styles.chipName}>You</span>
+                    <span className={styles.chipRole}>owner</span>
+                  </div>
+                  {(book.sharedWith ?? []).map((r, i) => (
+                    <>
+                      <span key={`div-${i}`} className={styles.chipDivider}>·</span>
+                      <div key={i} className={styles.participantChip}>
+                        <span className={styles.chipAvatar} style={{ background: r.canEdit ? '#7aab99' : '#c0bab3' }}>
+                          {r.displayName.charAt(0).toUpperCase()}
+                        </span>
+                        <span className={styles.chipName}>{r.displayName}</span>
+                        <span className={styles.chipRole}>{r.canEdit ? 'can edit' : 'view only'}</span>
+                      </div>
+                    </>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </div>
         {!isSharedView && (
           <button

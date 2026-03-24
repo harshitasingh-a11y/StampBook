@@ -134,6 +134,17 @@
   display: block;
 }
 
+/* ── User stickers ────────────────────────────────────── */
+
+.userSticker {
+  position: absolute;
+  object-fit: contain;
+  z-index: 4;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: center center;
+}
+
 /* ── Title label box ──────────────────────────────────── */
 
 /* left: 8.71% | bottom: 8.71% for equal padding from left and bottom edges */
