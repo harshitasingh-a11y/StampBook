@@ -16,7 +16,7 @@ export default function BookView() {
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const ownerUid = searchParams.get('owner');
+  const urlOwnerUid = searchParams.get('owner');
   const editAccess = searchParams.get('edit') === 'true';
 
   const books = useBooksStore((s) => s.books);
@@ -29,6 +29,12 @@ export default function BookView() {
   const [sharedBook, setSharedBook] = useState<Book | null>(null);
   const [sharedPages, setSharedPages] = useState<Page[]>([]);
   const [isLoadingShared, setIsLoadingShared] = useState(false);
+
+  // Get current book from store
+  const ownBook = books.find((b) => b.id === bookId);
+
+  // Determine the actual owner UID (from URL param or from book's sharedFromOwnerUid)
+  const ownerUid = urlOwnerUid || ownBook?.sharedFromOwnerUid;
 
   // Determine if viewing shared book
   const isSharedView = !!ownerUid && ownerUid !== currentUserUid;
@@ -117,11 +123,12 @@ export default function BookView() {
 
   const handleBackClick = useCallback(async () => {
     // Save shared book to current user's collection before navigating away
-    if (isSharedView && book && ownerUid && currentUserUid && ownerUid !== currentUserUid) {
+    // Use urlOwnerUid to track the original sharer (don't use ownBook's sharedFromOwnerUid here)
+    if (urlOwnerUid && book && currentUserUid && urlOwnerUid !== currentUserUid) {
       try {
         const sharedBookData: Book = {
           ...book,
-          sharedFromOwnerUid: ownerUid,
+          sharedFromOwnerUid: urlOwnerUid,
         };
         await useBooksStore.getState().addSharedBook(sharedBookData);
       } catch (error) {
@@ -129,7 +136,7 @@ export default function BookView() {
       }
     }
     navigate('/');
-  }, [isSharedView, book, ownerUid, currentUserUid, navigate]);
+  }, [urlOwnerUid, book, currentUserUid, navigate]);
 
   if (isLoadingShared) {
     return (
