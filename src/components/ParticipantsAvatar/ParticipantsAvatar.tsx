@@ -72,7 +72,10 @@ export default function ParticipantsAvatar({
 
   return (
     <div ref={dropdownRef} className={styles.container}>
-      <button className={styles.avatarButton} onClick={() => setIsOpen(!isOpen)}>
+      <button
+        className={`${styles.avatarButton} ${isOpen ? styles.active : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <div className={styles.avatarStack}>
           {participants.slice(0, displayCount).map((p, i) => (
             <div

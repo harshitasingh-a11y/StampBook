@@ -14,7 +14,8 @@
   transition: background 0.2s ease;
 }
 
-.avatarButton:hover {
+.avatarButton:hover,
+.avatarButton.active {
   background: rgba(0, 0, 0, 0.05);
 }
 
