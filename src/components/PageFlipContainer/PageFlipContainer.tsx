@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Camera, ImageIcon, Film, Pencil, Trash2, Check } from 'lucide-react';
 import type { Page, Stamp } from '@/types/page';
+import { CLIP_OPTIONS } from '@/types/book';
 import { usePagesStore } from '@/stores/pagesStore';
 import { useBooksStore } from '@/stores/booksStore';
 import { uploadMedia } from '@/lib/storageService';
@@ -412,6 +413,7 @@ function StampImageArea({ stamp, pageId, editable }: StampImageAreaProps) {
 interface Props {
   pages: Page[];
   accentColor: string;
+  clipStyle?: string;
   currentIndex: number;
   onIndexChange: (idx: number) => void;
   readOnly?: boolean;
@@ -573,8 +575,17 @@ function RightFace({ page, accentColor, idx, editable }: { page: Page; accentCol
   );
 }
 
+// Replicates the CSS multiply blend used by board-shape.svg (fill #D0AB8B)
+// Left cover = main board area (accent × #D0AB8B), Right cover = pure accent (folder tab)
+function multiplyBlend(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.round(r * 208 / 255)}, ${Math.round(g * 171 / 255)}, ${Math.round(b * 139 / 255)})`;
+}
+
 /* ─── Main component ─────────────────────────────────────────────── */
-export default function PageFlipContainer({ pages, accentColor, currentIndex, onIndexChange, readOnly, onUpdateText, onDeletePage }: Props) {
+export default function PageFlipContainer({ pages, accentColor, clipStyle, currentIndex, onIndexChange, readOnly, onUpdateText, onDeletePage }: Props) {
   const [flip, setFlip] = useState<Flip | null>(null);
   const [isEditingText, setIsEditingText] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -731,15 +742,19 @@ export default function PageFlipContainer({ pages, accentColor, currentIndex, on
           {/* ── Book cover (behind pages) ──────────────────────── */}
           <div className={styles.bookCoverBg}>
             <div className={styles.coverLeft}>
-              <img src="/static/openbookleftshape.png" className={styles.coverLeftImg} alt="" />
+              <div className={styles.coverLeftColored} style={{ backgroundColor: multiplyBlend(accentColor) }} />
             </div>
             <div className={styles.coverRight}>
-              <img src="/static/openbookrightshape.png" className={styles.coverRightImg} alt="" />
+              <div className={styles.coverRightColored} style={{ backgroundColor: accentColor }} />
             </div>
           </div>
 
-          {/* ── Binder clip ───────────────────────────────────── */}
-          <img src="/static/clip.svg" className={styles.binderClip} alt="" />
+          {/* ── Binder clip — matches the book cover clip ──────── */}
+          <img
+            src={CLIP_OPTIONS.find((c) => c.key === (clipStyle ?? 'default'))?.src ?? '/static/clip.svg'}
+            className={styles.binderClip}
+            alt=""
+          />
 
         <div className={styles.bookFrame}>
 

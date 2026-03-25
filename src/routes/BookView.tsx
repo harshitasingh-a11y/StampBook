@@ -238,6 +238,7 @@ export default function BookView() {
           <PageFlipContainer
             pages={pages}
             accentColor={accentColor}
+            clipStyle={book.clipStyle}
             currentIndex={currentPage}
             onIndexChange={setCurrentPage}
             readOnly={isSharedView && !editAccess}
