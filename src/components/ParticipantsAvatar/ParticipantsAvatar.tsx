@@ -74,13 +74,14 @@ export default function ParticipantsAvatar({
     <div ref={dropdownRef} className={styles.container}>
       <button className={styles.avatarButton} onClick={() => setIsOpen(!isOpen)}>
         <div className={styles.avatarStack}>
-          {participants.slice(0, displayCount).map((p) => (
+          {participants.slice(0, displayCount).map((p, i) => (
             <div
               key={p.name}
               className={styles.avatar}
               style={{
                 background: p.color,
-                zIndex: displayCount,
+                zIndex: displayCount - i,
+                marginLeft: i === 0 ? 0 : -12,
               }}
               title={p.name}
             >
@@ -88,7 +89,7 @@ export default function ParticipantsAvatar({
             </div>
           ))}
           {hiddenCount > 0 && (
-            <div className={styles.moreCount} title={`+${hiddenCount} more`}>
+            <div className={styles.moreCount} title={`+${hiddenCount} more`} style={{ marginLeft: -12 }}>
               +{hiddenCount}
             </div>
           )}
