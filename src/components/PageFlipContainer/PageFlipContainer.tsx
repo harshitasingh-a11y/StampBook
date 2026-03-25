@@ -135,36 +135,40 @@ function VideoPlayer({ clips }: VideoPlayerProps) {
   const paintOverlay = useCallback((video: HTMLVideoElement) => {
     const canvas = overlayRef.current;
     if (!canvas) return;
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if (!w || !h) return;
+    if (!video.videoWidth || !video.videoHeight) return;
 
+    // Use display dimensions (container size) so dot spacing matches photos
+    const displayW = canvas.parentElement?.offsetWidth  ?? video.videoWidth;
+    const displayH = canvas.parentElement?.offsetHeight ?? video.videoHeight;
+    if (!displayW || !displayH) return;
+
+    // Draw the video frame at display size to sample brightness
     const off = document.createElement('canvas');
-    off.width = w; off.height = h;
+    off.width = displayW; off.height = displayH;
     const offCtx = off.getContext('2d')!;
-    offCtx.drawImage(video, 0, 0, w, h);
+    offCtx.drawImage(video, 0, 0, displayW, displayH);
 
     let imageData: ImageData;
     try {
-      imageData = offCtx.getImageData(0, 0, w, h);
+      imageData = offCtx.getImageData(0, 0, displayW, displayH);
     } catch {
       return; // cross-origin frame — skip overlay
     }
     const data = imageData.data;
 
-    canvas.width  = w;
-    canvas.height = h;
+    canvas.width  = displayW;
+    canvas.height = displayH;
     const ctx = canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, w, h);
+    ctx.clearRect(0, 0, displayW, displayH);
 
     const dotSize    = 2;
     const spacing    = 5;
     const maxOpacity = 0.18;
 
     ctx.save();
-    for (let y = 0; y < h; y += spacing) {
-      for (let x = 0; x < w; x += spacing) {
-        const idx = (y * w + x) * 4;
+    for (let y = 0; y < displayH; y += spacing) {
+      for (let x = 0; x < displayW; x += spacing) {
+        const idx = (y * displayW + x) * 4;
         const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 765;
         const opacity = brightness * maxOpacity;
         ctx.beginPath();
