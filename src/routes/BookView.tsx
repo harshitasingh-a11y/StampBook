@@ -210,7 +210,7 @@ export default function BookView() {
           </h1>
         </div>
         <div className={styles.headerRight}>
-          {(isSharedView || book.isShared) && (
+          {isSharedView && (
             <ParticipantsAvatar
               ownerName={ownerDisplayName || book.ownerDisplayName}
               recipients={book.sharedWith}

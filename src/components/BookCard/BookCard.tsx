@@ -133,9 +133,6 @@ export default function BookCard({ book, index }: BookCardProps) {
           <div className={styles.titleLabel}>
             <div className={styles.titleWithBadge}>
               <span className={styles.labelTitle}>{book.title}</span>
-              {(book.sharedFromOwnerUid || book.isShared) && (
-                <span className={styles.sharedBadge}>Shared</span>
-              )}
             </div>
             <span className={styles.labelPages}>
               {book.pageCount} {book.pageCount === 1 ? 'page' : 'pages'}
